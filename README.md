@@ -23,7 +23,7 @@ Bridge AI systems with [Loxone](https://www.loxone.com/) home automation through
 
 ```bash
 # Clone and install
-git clone https://github.com/your-org/loxone-mcp.git
+git clone https://github.com/ondrejlevy/loxone-mcp.git
 cd loxone-mcp
 python -m venv .venv
 source .venv/bin/activate

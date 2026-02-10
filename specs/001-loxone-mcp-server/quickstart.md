@@ -35,7 +35,7 @@ This guide helps developers quickly set up a local development environment for t
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/your-org/loxone-mcp.git
+git clone https://github.com/ondrejlevy/loxone-mcp.git
 cd loxone-mcp
 ```
 
@@ -527,9 +527,9 @@ tail -f logs/audit.jsonl | jq
 
 ## Support
 
-- **Issues**: https://github.com/your-org/loxone-mcp/issues
-- **Discussions**: https://github.com/your-org/loxone-mcp/discussions
-- **Documentation**: https://docs.your-org.com/loxone-mcp
+- **Issues**: https://github.com/ondrejlevy/loxone-mcp/issues
+- **Discussions**: https://github.com/ondrejlevy/loxone-mcp/discussions
+- **Documentation**: https://github.com/ondrejlevy/loxone-mcp/blob/main/README.md
 
 ---
 

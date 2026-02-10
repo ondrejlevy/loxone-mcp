@@ -14,7 +14,7 @@ responsibly.
 ### How to Report
 
 1. **Do NOT open a public GitHub issue** for security vulnerabilities.
-2. Instead, use [GitHub Private Vulnerability Reporting](https://github.com/your-org/loxone-mcp/security/advisories/new)
+2. Instead, use [GitHub Private Vulnerability Reporting](https://github.com/ondrejlevy/loxone-mcp/security/advisories/new)
    to submit a confidential report.
 3. Alternatively, email the maintainers directly (see `pyproject.toml` for contact info).
 

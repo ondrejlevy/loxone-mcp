@@ -1,5 +1,5 @@
 # --- Build Stage ---
-FROM python:3.14-alpine AS builder
+FROM python:3.13-alpine AS builder
 
 WORKDIR /build
 
@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir build && \
 
 
 # --- Runtime Stage ---
-FROM python:3.14-alpine
+FROM python:3.13-alpine
 
 LABEL maintainer="loxone-mcp"
 LABEL description="Loxone MCP Server - Bridge AI systems with Loxone home automation"
