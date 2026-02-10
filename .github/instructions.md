@@ -114,6 +114,23 @@ pytest src/tests/unit/
 pytest src/tests/unit/test_config.py
 ```
 
+## Mandatory Pre-Commit Validation
+
+**EVERY code change MUST pass linting and tests before committing.** After modifying any source or test file, always run the following commands and verify they succeed:
+
+```bash
+# 1. Lint check — must report "All checks passed!"
+ruff check src/
+
+# 2. Format check — must produce no changes
+ruff format --check src/
+
+# 3. Unit tests — must all pass with ≥80% coverage
+pytest src/tests/unit/
+```
+
+If any of these commands fail, fix the issues before committing. **Do not commit code that fails linting or tests.** This applies to production code as well as test code.
+
 ## MCP Resources (Data Sources)
 
 MCP Resources expose Loxone data for AI context:
