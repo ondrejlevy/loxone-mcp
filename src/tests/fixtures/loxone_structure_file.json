@@ -1,0 +1,151 @@
+{
+  "lastModified": "2026-02-01 10:30:00",
+  "msInfo": {
+    "serialNr": "504F9412AB34",
+    "msName": "Test Miniserver",
+    "projectName": "Test Home",
+    "localUrl": "192.168.1.100",
+    "remoteUrl": "",
+    "tempUnit": 0,
+    "currency": "€",
+    "swVersion": "14.5.12.7",
+    "catTitle": "Categories",
+    "roomTitle": "Rooms"
+  },
+  "rooms": {
+    "0f5e3a01-0288-1b0a-ffff504f9412ab34": {
+      "uuid": "0f5e3a01-0288-1b0a-ffff504f9412ab34",
+      "name": "Living Room",
+      "type": 0,
+      "image": "living_room.svg",
+      "defaultRating": 2
+    },
+    "0f5e3a01-0289-1b0a-ffff504f9412ab34": {
+      "uuid": "0f5e3a01-0289-1b0a-ffff504f9412ab34",
+      "name": "Kitchen",
+      "type": 0,
+      "image": "kitchen.svg",
+      "defaultRating": 1
+    },
+    "0f5e3a01-028a-1b0a-ffff504f9412ab34": {
+      "uuid": "0f5e3a01-028a-1b0a-ffff504f9412ab34",
+      "name": "Bedroom",
+      "type": 2,
+      "image": "bedroom.svg",
+      "defaultRating": 1
+    },
+    "0f5e3a01-028b-1b0a-ffff504f9412ab34": {
+      "uuid": "0f5e3a01-028b-1b0a-ffff504f9412ab34",
+      "name": "Bathroom",
+      "type": 1,
+      "image": "bathroom.svg",
+      "defaultRating": 0
+    }
+  },
+  "cats": {
+    "0f5e3a01-0300-1b0a-ffff504f9412ab34": {
+      "uuid": "0f5e3a01-0300-1b0a-ffff504f9412ab34",
+      "name": "Lighting",
+      "type": "lights",
+      "image": "light.svg",
+      "defaultRating": 2
+    },
+    "0f5e3a01-0301-1b0a-ffff504f9412ab34": {
+      "uuid": "0f5e3a01-0301-1b0a-ffff504f9412ab34",
+      "name": "Shading",
+      "type": "shading",
+      "image": "blind.svg",
+      "defaultRating": 1
+    },
+    "0f5e3a01-0302-1b0a-ffff504f9412ab34": {
+      "uuid": "0f5e3a01-0302-1b0a-ffff504f9412ab34",
+      "name": "Climate",
+      "type": "heating",
+      "image": "temperature.svg",
+      "defaultRating": 1
+    }
+  },
+  "controls": {
+    "0f5e3a01-0100-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-0100-1b0a-ffff504f9412ab34",
+      "name": "Living Room Light",
+      "type": "LightController",
+      "room": "0f5e3a01-0288-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0300-1b0a-ffff504f9412ab34",
+      "defaultRating": 2,
+      "isSecured": false,
+      "states": {
+        "active": "0f5e3a01-0100-1b0a-ffff504f9412ab34/active",
+        "activeMoods": "0f5e3a01-0100-1b0a-ffff504f9412ab34/activeMoods",
+        "moodList": "0f5e3a01-0100-1b0a-ffff504f9412ab34/moodList"
+      },
+      "details": {
+        "isLED": true
+      },
+      "subControls": {}
+    },
+    "0f5e3a01-0101-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-0101-1b0a-ffff504f9412ab34",
+      "name": "Kitchen Switch",
+      "type": "Switch",
+      "room": "0f5e3a01-0289-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0300-1b0a-ffff504f9412ab34",
+      "defaultRating": 1,
+      "isSecured": false,
+      "states": {
+        "active": "0f5e3a01-0101-1b0a-ffff504f9412ab34/active"
+      },
+      "details": {},
+      "subControls": {}
+    },
+    "0f5e3a01-0102-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-0102-1b0a-ffff504f9412ab34",
+      "name": "Bedroom Blinds",
+      "type": "Jalousie",
+      "room": "0f5e3a01-028a-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0301-1b0a-ffff504f9412ab34",
+      "defaultRating": 1,
+      "isSecured": false,
+      "states": {
+        "position": "0f5e3a01-0102-1b0a-ffff504f9412ab34/position",
+        "shade": "0f5e3a01-0102-1b0a-ffff504f9412ab34/shade",
+        "up": "0f5e3a01-0102-1b0a-ffff504f9412ab34/up",
+        "down": "0f5e3a01-0102-1b0a-ffff504f9412ab34/down"
+      },
+      "details": {},
+      "subControls": {}
+    },
+    "0f5e3a01-0103-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-0103-1b0a-ffff504f9412ab34",
+      "name": "Living Room Dimmer",
+      "type": "EIBDimmer",
+      "room": "0f5e3a01-0288-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0300-1b0a-ffff504f9412ab34",
+      "defaultRating": 1,
+      "isSecured": false,
+      "states": {
+        "position": "0f5e3a01-0103-1b0a-ffff504f9412ab34/position"
+      },
+      "details": {},
+      "subControls": {}
+    },
+    "0f5e3a01-0104-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-0104-1b0a-ffff504f9412ab34",
+      "name": "Bathroom Thermostat",
+      "type": "IRoomControllerV2",
+      "room": "0f5e3a01-028b-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0302-1b0a-ffff504f9412ab34",
+      "defaultRating": 1,
+      "isSecured": false,
+      "states": {
+        "tempActual": "0f5e3a01-0104-1b0a-ffff504f9412ab34/tempActual",
+        "tempTarget": "0f5e3a01-0104-1b0a-ffff504f9412ab34/tempTarget",
+        "mode": "0f5e3a01-0104-1b0a-ffff504f9412ab34/mode"
+      },
+      "details": {
+        "format": "%.1f°"
+      },
+      "subControls": {}
+    }
+  }
+}

@@ -1,0 +1,48 @@
+# Loxone MCP Server Configuration
+# Copy this file to config/config.yaml and adjust values for your setup.
+#
+# All settings can also be overridden via environment variables.
+# See .env.example for the env var mapping.
+
+# --- MCP Server Settings ---
+server:
+  host: "0.0.0.0"          # Bind address (0.0.0.0 for all interfaces)
+  port: 8080                # HTTP server port
+  transport: "http"         # Transport: "http", "stdio", or "both"
+  log_level: "INFO"         # Log level: DEBUG, INFO, WARNING, ERROR
+  debug: false              # Enable debug mode (verbose console logging)
+
+# --- Loxone Miniserver Connection ---
+loxone:
+  host: "192.168.1.100"    # Miniserver IP address or hostname
+  port: 80                  # Miniserver port (80 for HTTP, 443 for HTTPS)
+  username: "mcp-user"      # Loxone username (create a dedicated user)
+  password: "changeme"      # Loxone password
+  use_tls: false            # Use TLS/SSL for Loxone connections
+
+# --- Access Control ---
+# Controls which MCP operations are allowed.
+# Modes:
+#   read-write  - Full access (query states + control components)
+#   read-only   - Query only (blocks control_component tool)
+#   write-only  - Control only (blocks resource reads)
+access_control:
+  mode: "read-write"
+
+# --- Prometheus Metrics ---
+metrics:
+  enabled: true             # Enable /metrics endpoint
+  endpoint: "/metrics"      # Metrics endpoint path
+
+# --- Audit Logging ---
+# Logs all operations to JSONL files for security compliance.
+audit:
+  enabled: true             # Enable audit logging
+  log_file: "logs/audit.jsonl"    # Audit log file path
+  retention_days: 90        # Days to keep audit logs (1-365)
+
+# --- Structure File Cache ---
+# Controls how the Loxone structure file is cached and refreshed.
+structure_cache:
+  ttl_seconds: 3600                 # Cache TTL (default: 1 hour)
+  change_detection_interval: 300    # Poll interval for changes (default: 5 min)
