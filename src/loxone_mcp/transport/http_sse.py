@@ -8,10 +8,13 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from aiohttp import web
+
+if TYPE_CHECKING:
+    from loxone_mcp.server import LoxoneMCPServer
 
 logger = structlog.get_logger()
 
@@ -29,7 +32,6 @@ def create_http_app(server: Any) -> web.Application:
     Returns:
         Configured aiohttp Application
     """
-    from loxone_mcp.server import LoxoneMCPServer
 
     loxone_server: LoxoneMCPServer = server
 
@@ -302,7 +304,7 @@ async def handle_sse(request: web.Request) -> web.StreamResponse:
             # Wait for notifications
             notification = await queue.get()
             event_data = json.dumps(notification)
-            await response.write(f"data: {event_data}\n\n".encode("utf-8"))
+            await response.write(f"data: {event_data}\n\n".encode())
     except (asyncio.CancelledError, ConnectionResetError):
         pass
     finally:
@@ -368,7 +370,7 @@ async def handle_cors_preflight(request: web.Request) -> web.Response:
 
 async def run_http_server(
     app: web.Application,
-    host: str = "0.0.0.0",  # noqa: S104
+    host: str = "0.0.0.0",
     port: int = 8080,
     tls_cert: str | None = None,
     tls_key: str | None = None,

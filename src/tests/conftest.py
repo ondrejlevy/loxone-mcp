@@ -4,10 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from pathlib import Path
-from typing import Any, AsyncIterator
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -28,6 +25,8 @@ from tests.fixtures.loxone_responses import (
     make_state_values,
 )
 
+if TYPE_CHECKING:
+    from uuid import UUID
 
 # --- Fixture: Raw structure data ---
 

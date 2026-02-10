@@ -7,7 +7,7 @@ notification flow, and access control.
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID
 
 import pytest
@@ -39,7 +39,6 @@ from loxone_mcp.server import (
 )
 from loxone_mcp.state.cache import StateCache
 from loxone_mcp.state.manager import StateManager
-
 
 # --- Test Fixtures ---
 

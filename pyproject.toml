@@ -76,7 +76,10 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"src/tests/**/*.py" = ["S101", "S106"]
+"src/tests/**/*.py" = ["S101", "S105", "S106", "S107"]
+"src/loxone_mcp/loxone/auth.py" = ["S105"]  # Enum values for auth tiers
+"src/loxone_mcp/server.py" = ["S110"]  # Silent exception in shutdown
+"src/loxone_mcp/transport/http_sse.py" = ["S110", "ASYNC110"]  # Silent auth errors, event loop pattern
 
 [tool.ruff.lint.isort]
 known-first-party = ["loxone_mcp"]

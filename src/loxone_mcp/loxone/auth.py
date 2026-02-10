@@ -15,24 +15,24 @@ import asyncio
 import base64
 import hashlib
 import hmac
-import json
 import os
 import time
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any
+from enum import StrEnum
+from typing import TYPE_CHECKING, Any
 
 import structlog
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-from loxone_mcp.config import LoxoneConfig
+if TYPE_CHECKING:
+    from loxone_mcp.config import LoxoneConfig
 
 logger = structlog.get_logger()
 
 
-class AuthTier(str, Enum):
+class AuthTier(StrEnum):
     """Authentication tier."""
 
     TOKEN_WS = "token-websocket"
@@ -180,7 +180,7 @@ class LoxoneAuthenticator:
             Hex-encoded HMAC-SHA1 hash
         """
         key = password.encode("utf-8")
-        message = f"{salt}".encode("utf-8")
+        message = f"{salt}".encode()
         return hmac.new(key, message, hashlib.sha1).hexdigest()
 
     @staticmethod

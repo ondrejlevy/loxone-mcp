@@ -6,12 +6,9 @@ retention management, and sensitive data redaction.
 
 from __future__ import annotations
 
-import json
-import os
 import re
-import time
 from datetime import UTC, datetime, timedelta
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +21,7 @@ logger = structlog.get_logger()
 # --- Models (T059) ---
 
 
-class EventType(str, Enum):
+class EventType(StrEnum):
     """Audit event types."""
 
     AUTH_SUCCESS = "AUTH_SUCCESS"
@@ -216,7 +213,7 @@ def get_audit_logger() -> AuditLogger | None:
 
 def set_audit_logger(logger_instance: AuditLogger) -> None:
     """Set the global audit logger instance."""
-    global _audit_logger  # noqa: PLW0603
+    global _audit_logger
     _audit_logger = logger_instance
 
 

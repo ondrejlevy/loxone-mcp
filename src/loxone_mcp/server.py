@@ -7,26 +7,26 @@ Manages the Loxone integration lifecycle (connect, auth, state updates).
 from __future__ import annotations
 
 import asyncio
-from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator
+import contextlib
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from mcp.server.lowlevel import Server
 from mcp.types import (
-    GetPromptResult,
-    Prompt,
     Resource,
     TextContent,
     Tool,
 )
 
-from loxone_mcp.config import RootConfig, TransportType, setup_logging
 from loxone_mcp.loxone.auth import LoxoneAuthenticator
 from loxone_mcp.loxone.client import LoxoneClient
 from loxone_mcp.loxone.structure import parse_structure_file
 from loxone_mcp.loxone.websocket import LoxoneWebSocket
 from loxone_mcp.state.cache import StateCache
 from loxone_mcp.state.manager import StateManager
+
+if TYPE_CHECKING:
+    from loxone_mcp.config import RootConfig
 
 logger = structlog.get_logger()
 
@@ -297,10 +297,8 @@ class LoxoneMCPServer:
         for task in [self._structure_poll_task, self._notification_flush_task]:
             if task and not task.done():
                 task.cancel()
-                try:
+                with contextlib.suppress(asyncio.CancelledError):
                     await task
-                except asyncio.CancelledError:
-                    pass
 
         # 2. Flush pending notifications
         try:

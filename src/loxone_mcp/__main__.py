@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
 import signal
 import sys
-from pathlib import Path
 
 import structlog
 
@@ -65,10 +65,7 @@ def parse_args() -> argparse.Namespace:
 
 def load_config(args: argparse.Namespace) -> RootConfig:
     """Load configuration from YAML file or environment variables."""
-    if args.config:
-        config = RootConfig.from_yaml(args.config)
-    else:
-        config = RootConfig.from_env()
+    config = RootConfig.from_yaml(args.config) if args.config else RootConfig.from_env()
 
     # Apply CLI overrides
     if args.transport:
@@ -146,7 +143,7 @@ async def async_main(config: RootConfig) -> None:
             transport_task = asyncio.create_task(run_http(server))
 
         # Wait for either transport completion or shutdown signal
-        done, pending = await asyncio.wait(
+        _done, pending = await asyncio.wait(
             [transport_task, asyncio.create_task(shutdown_event.wait())],
             return_when=asyncio.FIRST_COMPLETED,
         )
@@ -154,10 +151,8 @@ async def async_main(config: RootConfig) -> None:
         # Cancel remaining tasks
         for task in pending:
             task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await task
-            except asyncio.CancelledError:
-                pass
 
     except Exception:
         logger.exception("server_error")
@@ -172,7 +167,7 @@ def main() -> None:
     try:
         config = load_config(args)
     except (ValueError, FileNotFoundError) as e:
-        print(f"Configuration error: {e}", file=sys.stderr)  # noqa: T201
+        print(f"Configuration error: {e}", file=sys.stderr)
         sys.exit(1)
 
     # Setup logging
@@ -189,10 +184,8 @@ def main() -> None:
         access_mode=config.access_control.mode.value,
     )
 
-    try:
+    with contextlib.suppress(KeyboardInterrupt):
         asyncio.run(async_main(config))
-    except KeyboardInterrupt:
-        pass
 
 
 if __name__ == "__main__":

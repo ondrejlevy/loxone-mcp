@@ -7,9 +7,9 @@ Uses Pydantic for validation with sensible defaults.
 from __future__ import annotations
 
 import os
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 import structlog
 import yaml
@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field, field_validator
 logger = structlog.get_logger()
 
 
-class AccessMode(str, Enum):
+class AccessMode(StrEnum):
     """Access control mode for MCP operations."""
 
     READ_WRITE = "read-write"
@@ -26,7 +26,7 @@ class AccessMode(str, Enum):
     WRITE_ONLY = "write-only"
 
 
-class TransportType(str, Enum):
+class TransportType(StrEnum):
     """Supported MCP transport types."""
 
     HTTP = "http"
@@ -37,7 +37,7 @@ class TransportType(str, Enum):
 class ServerConfig(BaseModel):
     """MCP server configuration."""
 
-    host: str = Field(default="0.0.0.0", description="Server bind address")  # noqa: S104
+    host: str = Field(default="0.0.0.0", description="Server bind address")
     port: int = Field(default=8080, ge=1, le=65535, description="Server port")
     transport: TransportType = Field(default=TransportType.HTTP, description="Transport type")
     log_level: str = Field(default="INFO", description="Logging level")

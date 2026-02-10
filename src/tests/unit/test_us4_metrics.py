@@ -8,10 +8,9 @@ from __future__ import annotations
 
 import time
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
-from prometheus_client import REGISTRY, CollectorRegistry
 
 from loxone_mcp.metrics.collector import (
     cache_size_bytes,
@@ -35,7 +34,6 @@ from loxone_mcp.metrics.collector import (
     track_api_duration,
     track_request_duration,
 )
-
 
 # --- Metric Definitions ---
 
@@ -108,10 +106,9 @@ class TestTrackRequestDuration:
         # Just verify it doesn't error; histogram internals are complex
 
     def test_tracks_duration_on_exception(self) -> None:
-        with pytest.raises(ValueError):
-            with track_request_duration("test_track_error"):
-                msg = "test"
-                raise ValueError(msg)
+        with pytest.raises(ValueError), track_request_duration("test_track_error"):
+            msg = "test"
+            raise ValueError(msg)
         # Duration should still be recorded even on error
 
 
@@ -213,7 +210,6 @@ class TestMetricsEndpoint:
 
     @pytest.fixture
     def app(self) -> Any:
-        from aiohttp import web
 
         from loxone_mcp.config import (
             AccessControlConfig,

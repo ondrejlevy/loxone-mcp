@@ -31,7 +31,6 @@ from loxone_mcp.server import (
 from loxone_mcp.state.cache import StateCache
 from loxone_mcp.state.manager import StateManager
 
-
 # --- Test Fixtures ---
 
 ROOM_UUID = UUID("0a1b2c3d-0000-0000-0000-000000000001")
@@ -226,7 +225,7 @@ class TestActionValidation:
 
     async def test_valid_actions_listed_in_error(self) -> None:
         server = make_server(structure=make_structure())
-        with pytest.raises(ToolExecutionError, match="On.*Off"):
+        with pytest.raises(ToolExecutionError, match=r"On.*Off"):
             await handle_call_tool(
                 server,
                 "control_component",

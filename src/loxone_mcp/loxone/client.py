@@ -8,15 +8,17 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import aiohttp
 import structlog
 
-from loxone_mcp.config import LoxoneConfig
-from loxone_mcp.loxone.auth import AuthTier, LoxoneAuthenticator
-from loxone_mcp.loxone.models import StructureFile
 from loxone_mcp.loxone.structure import parse_structure_file
+
+if TYPE_CHECKING:
+    from loxone_mcp.config import LoxoneConfig
+    from loxone_mcp.loxone.auth import LoxoneAuthenticator
+    from loxone_mcp.loxone.models import StructureFile
 
 logger = structlog.get_logger()
 
@@ -97,7 +99,6 @@ class LoxoneClient:
                     )
 
                     # Metrics (T055)
-                    from loxone_mcp.metrics.collector import track_api_duration
 
                     # Record the successful fetch (duration tracked at higher level)
                     return structure
@@ -168,9 +169,9 @@ class LoxoneClient:
         session = await self._get_session()
 
         # Metrics instrumentation (T055)
-        from loxone_mcp.metrics.collector import loxone_api_duration
-
         import time
+
+        from loxone_mcp.metrics.collector import loxone_api_duration
 
         start = time.monotonic()
         try:
@@ -190,7 +191,7 @@ class LoxoneClient:
                 loxone_api_duration.labels(endpoint="send_command").observe(duration)
                 return data
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error("loxone_command_timeout", command=command)
             raise
         except aiohttp.ClientError as e:

@@ -8,9 +8,12 @@ from __future__ import annotations
 
 import time
 from contextlib import contextmanager
-from typing import Any, Generator
+from typing import TYPE_CHECKING
 
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 # --- MCP Metrics ---
 
@@ -77,7 +80,7 @@ cache_size_bytes = Gauge(
 
 
 @contextmanager
-def track_request_duration(method: str) -> Generator[None, None, None]:
+def track_request_duration(method: str) -> Generator[None]:
     """Context manager to track MCP request duration.
 
     Args:
@@ -92,7 +95,7 @@ def track_request_duration(method: str) -> Generator[None, None, None]:
 
 
 @contextmanager
-def track_api_duration(endpoint: str) -> Generator[None, None, None]:
+def track_api_duration(endpoint: str) -> Generator[None]:
     """Context manager to track Loxone API call duration.
 
     Args:

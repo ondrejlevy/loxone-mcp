@@ -7,17 +7,22 @@ and automatic reconnection with exponential backoff.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import struct
-from typing import Any, Callable, Coroutine
+from collections.abc import Callable, Coroutine
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 import structlog
 import websockets
-from websockets.asyncio.client import ClientConnection
 
-from loxone_mcp.config import LoxoneConfig
 from loxone_mcp.loxone.auth import AuthTier, LoxoneAuthenticator
+
+if TYPE_CHECKING:
+    from websockets.asyncio.client import ClientConnection
+
+    from loxone_mcp.config import LoxoneConfig
 
 logger = structlog.get_logger()
 
@@ -159,7 +164,7 @@ class LoxoneWebSocket:
         if not self._ws:
             return
         await self._ws.send("jdev/sps/enablebinstatusupdate")
-        response = await self._ws.recv()
+        await self._ws.recv()
         logger.info("websocket_status_updates_enabled")
 
     async def start(self) -> None:
@@ -184,10 +189,8 @@ class LoxoneWebSocket:
             self._receive_task.cancel()
 
         if self._ws:
-            try:
+            with contextlib.suppress(Exception):
                 await self._ws.close()
-            except Exception:
-                pass
             self._ws = None
             self._connected = False
 
@@ -235,7 +238,7 @@ class LoxoneWebSocket:
             return
 
         # Parse header
-        _, msg_type, payload_len = struct.unpack_from("<BBxx I", data)
+        _, msg_type, _payload_len = struct.unpack_from("<BBxx I", data)
 
         payload = data[BINARY_HEADER_SIZE:]
 

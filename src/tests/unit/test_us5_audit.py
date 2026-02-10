@@ -7,13 +7,8 @@ sensitive data redaction, and convenience logging functions.
 from __future__ import annotations
 
 import json
-import os
-import tempfile
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any
-
-import pytest
+from typing import TYPE_CHECKING
 
 from loxone_mcp.audit.logger import (
     AuditEntry,
@@ -26,6 +21,8 @@ from loxone_mcp.audit.logger import (
     set_audit_logger,
 )
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # --- AuditEntry Model Tests (T059) ---
 
@@ -225,7 +222,7 @@ class TestAuditLogger:
         logger.log(entry)
         logger.close()
 
-        content = list(tmp_path.glob("audit-*.jsonl"))[0].read_text()
+        content = next(iter(tmp_path.glob("audit-*.jsonl"))).read_text()
         assert "secret123" not in content
         assert "***REDACTED***" in content
 
@@ -297,7 +294,7 @@ class TestLogEvent:
         )
         logger.close()
 
-        content = list(tmp_path.glob("audit-*.jsonl"))[0].read_text()
+        content = next(iter(tmp_path.glob("audit-*.jsonl"))).read_text()
         data = json.loads(content.strip())
         assert data["event_type"] == "TOOL_EXECUTION"
         assert data["method"] == "On"

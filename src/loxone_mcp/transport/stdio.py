@@ -66,7 +66,7 @@ async def send_stdio_notification(
     try:
         # The MCP SDK's write_stream handles serialization
         # For direct notification sending, we format the JSON-RPC notification
-        notification_json = json.dumps(notification) + "\n"
+        json.dumps(notification) + "\n"
         logger.debug("stdio_notification_sent", method=notification.get("method"))
     except Exception:
         logger.exception("stdio_notification_error")

@@ -10,12 +10,14 @@ from __future__ import annotations
 import sys
 import threading
 import time
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from loxone_mcp.loxone.models import Category, Component, Room, StructureFile
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from loxone_mcp.loxone.models import StructureFile
 
 logger = structlog.get_logger()
 

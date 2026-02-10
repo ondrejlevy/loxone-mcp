@@ -134,12 +134,11 @@ async def handle_call_tool(
         raise ToolNotFoundError(name)
 
     # Metrics instrumentation (T054)
-    from loxone_mcp.metrics.collector import record_request, track_request_duration
+    import time as _time
 
     # Audit logging (T061, T063)
     from loxone_mcp.audit.logger import EventType, log_event
-
-    import time as _time
+    from loxone_mcp.metrics.collector import record_request, track_request_duration
 
     start = _time.monotonic()
     try:

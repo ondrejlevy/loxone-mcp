@@ -5,13 +5,14 @@ Bridges Loxone state updates with MCP notification delivery.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Coroutine
-from uuid import UUID
+from collections.abc import Callable, Coroutine
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from loxone_mcp.loxone.models import StructureFile
-from loxone_mcp.state.cache import StateCache
+if TYPE_CHECKING:
+    from loxone_mcp.loxone.models import StructureFile
+    from loxone_mcp.state.cache import StateCache
 
 logger = structlog.get_logger()
 

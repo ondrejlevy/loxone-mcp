@@ -108,9 +108,9 @@ async def handle_read_resource(
         raise ResourceNotFoundError(uri)
 
     # Metrics instrumentation (T053)
-    from loxone_mcp.metrics.collector import record_request, track_request_duration
-
     import time as _time
+
+    from loxone_mcp.metrics.collector import record_request, track_request_duration
 
     start = _time.monotonic()
     with track_request_duration("resources/read"):

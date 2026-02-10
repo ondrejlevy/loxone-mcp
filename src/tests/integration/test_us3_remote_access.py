@@ -8,13 +8,11 @@ from __future__ import annotations
 
 import asyncio
 import base64
-import json
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from aiohttp import web
-from aiohttp.test_utils import TestClient, TestServer
 
 from loxone_mcp.config import (
     AccessControlConfig,
@@ -33,7 +31,6 @@ from loxone_mcp.transport.http_sse import (
     create_http_app,
     extract_credentials,
 )
-
 
 # --- Fixtures ---
 
