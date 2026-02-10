@@ -37,20 +37,28 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      actions: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Build image
         run: docker build -f docker/Dockerfile -t loxone-mcp:scan .
-      - name: Run Trivy
+      - name: Run Trivy (table output)
+        uses: aquasecurity/trivy-action@22438a435773de8c97dc0958cc0b823c45b064ac # master
+        with:
+          image-ref: "loxone-mcp:scan"
+          format: "table"
+          severity: "CRITICAL,HIGH"
+      - name: Run Trivy (SARIF output)
+        if: github.repository != 'ondrejlevy/loxone-mcp'
         uses: aquasecurity/trivy-action@22438a435773de8c97dc0958cc0b823c45b064ac # master
         with:
           image-ref: "loxone-mcp:scan"
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
-      - name: Upload Trivy results
+      - name: Upload Trivy results to GitHub Security
+        if: always() && github.repository != 'ondrejlevy/loxone-mcp'
         uses: github/codeql-action/upload-sarif@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # v4.32.2
-        if: always()
         with:
           sarif_file: "trivy-results.sarif"
 
@@ -60,9 +68,18 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      actions: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Run Trivy filesystem scan
+      - name: Run Trivy filesystem scan (table output)
+        uses: aquasecurity/trivy-action@22438a435773de8c97dc0958cc0b823c45b064ac # master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "table"
+          severity: "CRITICAL,HIGH"
+      - name: Run Trivy filesystem scan (SARIF output)
+        if: github.repository != 'ondrejlevy/loxone-mcp'
         uses: aquasecurity/trivy-action@22438a435773de8c97dc0958cc0b823c45b064ac # master
         with:
           scan-type: "fs"
@@ -70,8 +87,8 @@ jobs:
           format: "sarif"
           output: "trivy-fs-results.sarif"
           severity: "CRITICAL,HIGH"
-      - name: Upload Trivy results
+      - name: Upload Trivy results to GitHub Security
+        if: always() && github.repository != 'ondrejlevy/loxone-mcp'
         uses: github/codeql-action/upload-sarif@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # v4.32.2
-        if: always()
         with:
           sarif_file: "trivy-fs-results.sarif"
