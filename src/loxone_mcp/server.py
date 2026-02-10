@@ -20,7 +20,6 @@ from mcp.types import (
 
 from loxone_mcp.loxone.auth import LoxoneAuthenticator
 from loxone_mcp.loxone.client import LoxoneClient
-from loxone_mcp.loxone.structure import parse_structure_file
 from loxone_mcp.loxone.websocket import LoxoneWebSocket
 from loxone_mcp.state.cache import StateCache
 from loxone_mcp.state.manager import StateManager

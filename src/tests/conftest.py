@@ -7,6 +7,7 @@ import json
 from typing import TYPE_CHECKING, Any
 
 import pytest
+import structlog
 
 from tests.fixtures.loxone_responses import (
     BATHROOM_UUID,
@@ -27,6 +28,7 @@ from tests.fixtures.loxone_responses import (
 
 if TYPE_CHECKING:
     from uuid import UUID
+
 
 # --- Fixture: Raw structure data ---
 
