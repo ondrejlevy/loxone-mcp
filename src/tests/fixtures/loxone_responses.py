@@ -34,7 +34,8 @@ def load_structure_file() -> dict[str, Any]:
     """Load the mock Loxone structure file."""
     path = FIXTURES_DIR / "loxone_structure_file.json"
     with open(path) as f:
-        return json.load(f)
+        data: dict[str, Any] = json.load(f)
+        return data
 
 
 def make_structure_response() -> dict[str, Any]:

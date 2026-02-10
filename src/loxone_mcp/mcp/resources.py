@@ -28,9 +28,11 @@ async def get_resource_list(server: LoxoneMCPServer) -> list[Resource]:
 
     Used by MCP server's list_resources handler.
     """
+    from pydantic import AnyUrl
+
     return [
         Resource(
-            uri="loxone://structure",
+            uri=AnyUrl("loxone://structure"),
             name="Loxone Structure File",
             description=(
                 "Complete Loxone miniserver configuration including "
@@ -39,7 +41,7 @@ async def get_resource_list(server: LoxoneMCPServer) -> list[Resource]:
             mimeType="application/json",
         ),
         Resource(
-            uri="loxone://components",
+            uri=AnyUrl("loxone://components"),
             name="Components List",
             description=(
                 "List of all controllable components with enriched data "
@@ -48,13 +50,13 @@ async def get_resource_list(server: LoxoneMCPServer) -> list[Resource]:
             mimeType="application/json",
         ),
         Resource(
-            uri="loxone://rooms",
+            uri=AnyUrl("loxone://rooms"),
             name="Rooms List",
             description="List of all rooms with component counts",
             mimeType="application/json",
         ),
         Resource(
-            uri="loxone://categories",
+            uri=AnyUrl("loxone://categories"),
             name="Categories List",
             description="List of all component categories with component counts",
             mimeType="application/json",

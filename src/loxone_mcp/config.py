@@ -314,11 +314,15 @@ def setup_logging(log_level: str = "INFO", debug: bool = False) -> None:
     else:
         processors.append(structlog.processors.JSONRenderer())
 
+    # Map log level string to int
+    import logging
+    level_int = logging.getLevelName(log_level.upper())
+    if not isinstance(level_int, int):
+        level_int = 20  # INFO default
+
     structlog.configure(
         processors=processors,
-        wrapper_class=structlog.make_filtering_bound_logger(
-            structlog.stdlib._NAME_TO_LEVEL.get(log_level.upper(), 20)
-        ),
+        wrapper_class=structlog.make_filtering_bound_logger(level_int),
         context_class=dict,
         logger_factory=structlog.PrintLoggerFactory(),
         cache_logger_on_first_use=True,

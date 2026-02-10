@@ -51,11 +51,12 @@ class LoxoneMCPServer:
         )
         self._state_manager = StateManager(self._cache)
         self._authenticator = LoxoneAuthenticator(config.loxone)
-        self._http_client = LoxoneClient(config.loxone)
+        self._http_client = LoxoneClient(config.loxone, self._authenticator)
         self._ws_client = LoxoneWebSocket(config.loxone, self._authenticator)
         self._mcp_server = self._create_mcp_server()
         self._structure_poll_task: asyncio.Task[None] | None = None
         self._notification_flush_task: asyncio.Task[None] | None = None
+        self._stdio_write_stream: Any = None
 
     @property
     def mcp_server(self) -> Server:
@@ -76,7 +77,7 @@ class LoxoneMCPServer:
         """Create and configure the MCP low-level server."""
         server = Server("loxone-mcp")
 
-        @server.list_resources()
+        @server.list_resources()  # type: ignore[no-untyped-call, untyped-decorator]
         async def list_resources() -> list[Resource]:
             """List available MCP resources."""
             # Defer to resource handlers module (registered in Phase 3)
@@ -89,7 +90,7 @@ class LoxoneMCPServer:
                 logger.debug("mcp_response", method="resources/list", count=len(result))
             return result
 
-        @server.read_resource()
+        @server.read_resource()  # type: ignore[no-untyped-call, untyped-decorator]
         async def read_resource(uri: str) -> Any:
             """Read a specific MCP resource."""
             from loxone_mcp.mcp.resources import handle_read_resource
@@ -101,7 +102,7 @@ class LoxoneMCPServer:
                 logger.debug("mcp_response", method="resources/read", uri=str(uri))
             return result
 
-        @server.list_tools()
+        @server.list_tools()  # type: ignore[no-untyped-call, untyped-decorator]
         async def list_tools() -> list[Tool]:
             """List available MCP tools."""
             from loxone_mcp.mcp.tools import get_tool_list
@@ -113,7 +114,7 @@ class LoxoneMCPServer:
                 logger.debug("mcp_response", method="tools/list", count=len(result))
             return result
 
-        @server.call_tool()
+        @server.call_tool()  # type: ignore[untyped-decorator]
         async def call_tool(name: str, arguments: dict[str, Any] | None = None) -> Any:
             """Execute an MCP tool."""
             from loxone_mcp.mcp.tools import handle_call_tool
@@ -136,8 +137,7 @@ class LoxoneMCPServer:
 
         # Fetch structure file via HTTP
         try:
-            structure_data = await self._http_client.fetch_structure_file()
-            structure = parse_structure_file(structure_data)
+            structure = await self._http_client.fetch_structure_file()
             await self._state_manager.on_structure_loaded(structure)
             logger.info(
                 "structure_loaded",
@@ -166,7 +166,7 @@ class LoxoneMCPServer:
             authenticated = await self._ws_client.authenticate()
             if authenticated:
                 await self._ws_client.enable_status_updates()
-                self._authenticator.start_token_refresh(self._refresh_token_callback)
+                await self._authenticator.start_token_refresh(self._refresh_token_callback)
                 # Metrics (T057)
                 from loxone_mcp.metrics.collector import set_websocket_status
 
@@ -196,7 +196,7 @@ class LoxoneMCPServer:
             for state_key, state_path in comp.states.items():
                 # State paths are UUIDs or UUID/suffix patterns
                 state_uuid = state_path.split("/")[0] if "/" in state_path else state_path
-                state_map[state_uuid] = (comp.uuid, state_key)
+                state_map[state_uuid] = (str(comp.uuid), state_key)
 
         return state_map
 
@@ -210,8 +210,7 @@ class LoxoneMCPServer:
 
         # Re-fetch structure file
         try:
-            structure_data = await self._http_client.fetch_structure_file()
-            structure = parse_structure_file(structure_data)
+            structure = await self._http_client.fetch_structure_file()
             await self._state_manager.on_structure_loaded(structure)
 
             # Rebuild state UUID map
@@ -241,8 +240,7 @@ class LoxoneMCPServer:
                 changed = await self._http_client.check_structure_changed()
                 if changed:
                     logger.info("structure_change_detected")
-                    structure_data = await self._http_client.fetch_structure_file()
-                    structure = parse_structure_file(structure_data)
+                    structure = await self._http_client.fetch_structure_file()
                     await self._state_manager.on_structure_loaded(structure)
                     state_map = self._build_state_uuid_map()
                     self._ws_client.set_state_uuid_map(state_map)

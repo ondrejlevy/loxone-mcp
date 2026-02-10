@@ -7,6 +7,7 @@ and notification delivery.
 from __future__ import annotations
 
 import asyncio
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from loxone_mcp.transport.stdio import run_stdio_transport, send_stdio_notification
@@ -27,7 +28,7 @@ class TestStdioTransport:
         mock_read = AsyncMock()
         mock_write = AsyncMock()
 
-        async def mock_run(read, write, opts):
+        async def mock_run(read: Any, write: Any, opts: Any) -> None:
             # Verify write stream was set
             assert server._stdio_write_stream is mock_write
 
@@ -50,7 +51,7 @@ class TestStdioTransport:
         server.mcp_server = MagicMock()
         server.mcp_server.create_initialization_options = MagicMock(return_value={})
 
-        async def mock_run(read, write, opts):
+        async def mock_run(read: Any, write: Any, opts: Any) -> None:
             raise asyncio.CancelledError
 
         server.mcp_server.run = mock_run
@@ -70,7 +71,7 @@ class TestStdioTransport:
         server.mcp_server = MagicMock()
         server.mcp_server.create_initialization_options = MagicMock(return_value={})
 
-        async def mock_run(read, write, opts):
+        async def mock_run(read: Any, write: Any, opts: Any) -> None:
             msg = "connection lost"
             raise OSError(msg)
 

@@ -455,7 +455,7 @@ class TestStateCacheIntegration:
         server = make_server(structure=structure)
         notified = []
         server.state_manager.register_notification_callback(
-            lambda uri: notified.append(uri)  # type: ignore[arg-type, return-value]
+            lambda uri: notified.append(uri)
         )
         await server.state_manager.on_state_update(str(LIGHT_UUID), "active", 1.0)
         await server.state_manager.flush_notifications()

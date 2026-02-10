@@ -189,7 +189,8 @@ class LoxoneClient:
 
                 duration = time.monotonic() - start
                 loxone_api_duration.labels(endpoint="send_command").observe(duration)
-                return data
+                result: dict[str, Any] = data
+                return result
 
         except TimeoutError:
             logger.error("loxone_command_timeout", command=command)

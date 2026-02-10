@@ -62,7 +62,7 @@ async def cors_middleware(
     handler: Any,
 ) -> web.StreamResponse:
     """Add CORS headers to all responses."""
-    response = await handler(request)
+    response: web.StreamResponse = await handler(request)
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = (
@@ -78,7 +78,8 @@ async def error_middleware(
 ) -> web.StreamResponse:
     """Global error handling middleware."""
     try:
-        return await handler(request)
+        response: web.StreamResponse = await handler(request)
+        return response
     except web.HTTPException:
         raise
     except Exception:

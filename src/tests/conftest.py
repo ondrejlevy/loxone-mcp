@@ -142,7 +142,8 @@ class MockHTTPResponse:
     async def json(self) -> dict[str, Any]:
         if self._json_data is not None:
             return self._json_data
-        return json.loads(self._text)
+        result: dict[str, Any] = json.loads(self._text)
+        return result
 
     async def text(self) -> str:
         if self._text:
