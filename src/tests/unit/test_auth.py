@@ -11,7 +11,7 @@ import hashlib
 import hmac
 import time
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -21,7 +21,6 @@ from loxone_mcp.loxone.auth import (
     AuthToken,
     LoxoneAuthenticator,
 )
-
 
 # --- AuthToken Tests ---
 
@@ -118,8 +117,8 @@ class TestEncryption:
         assert enc1 != enc2
 
     def test_rsa_encrypt(self) -> None:
-        from cryptography.hazmat.primitives.asymmetric import rsa
         from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
 
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
         public_key_pem = private_key.public_key().public_bytes(
@@ -156,8 +155,8 @@ class TestCommandBuilders:
             auth.build_key_exchange_command()
 
     def test_build_key_exchange_with_key(self) -> None:
-        from cryptography.hazmat.primitives.asymmetric import rsa
         from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
 
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
         pem = private_key.public_key().public_bytes(

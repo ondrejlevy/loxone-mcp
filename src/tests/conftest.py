@@ -7,7 +7,6 @@ import json
 from typing import TYPE_CHECKING, Any
 
 import pytest
-import structlog
 
 from tests.fixtures.loxone_responses import (
     BATHROOM_UUID,

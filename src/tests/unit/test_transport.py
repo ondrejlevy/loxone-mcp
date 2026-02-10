@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import asyncio
 import base64
-import json
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -16,8 +15,8 @@ import pytest
 from aiohttp import web
 
 from loxone_mcp.transport.http_sse import (
-    SSE_CLIENTS_KEY,
     LOXONE_SERVER_KEY,
+    SSE_CLIENTS_KEY,
     _dispatch_mcp_method,
     _resource_to_dict,
     _tool_to_dict,

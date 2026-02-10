@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import os
 import textwrap
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import patch
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 import pytest
 
@@ -27,7 +29,6 @@ from loxone_mcp.config import (
     _redact_sensitive,
     setup_logging,
 )
-
 
 # --- Enum Tests ---
 
@@ -66,9 +67,9 @@ class TestServerConfig:
         assert cfg.debug is True
 
     def test_port_range_validation(self) -> None:
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             ServerConfig(port=0)
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             ServerConfig(port=70000)
 
 
@@ -163,21 +164,27 @@ class TestRootConfigFromEnv:
 
     def test_missing_host_raises(self) -> None:
         env = {"LOXONE_USERNAME": "user", "LOXONE_PASSWORD": "pass"}
-        with patch.dict(os.environ, env, clear=True):
-            with pytest.raises(ValueError, match="LOXONE_HOST"):
-                RootConfig.from_env()
+        with (
+            patch.dict(os.environ, env, clear=True),
+            pytest.raises(ValueError, match="LOXONE_HOST"),
+        ):
+            RootConfig.from_env()
 
     def test_missing_username_raises(self) -> None:
         env = {"LOXONE_HOST": "host", "LOXONE_PASSWORD": "pass"}
-        with patch.dict(os.environ, env, clear=True):
-            with pytest.raises(ValueError, match="LOXONE_USERNAME"):
-                RootConfig.from_env()
+        with (
+            patch.dict(os.environ, env, clear=True),
+            pytest.raises(ValueError, match="LOXONE_USERNAME"),
+        ):
+            RootConfig.from_env()
 
     def test_missing_password_raises(self) -> None:
         env = {"LOXONE_HOST": "host", "LOXONE_USERNAME": "user"}
-        with patch.dict(os.environ, env, clear=True):
-            with pytest.raises(ValueError, match="LOXONE_PASSWORD"):
-                RootConfig.from_env()
+        with (
+            patch.dict(os.environ, env, clear=True),
+            pytest.raises(ValueError, match="LOXONE_PASSWORD"),
+        ):
+            RootConfig.from_env()
 
     def test_invalid_loxone_port(self) -> None:
         env = {
@@ -186,9 +193,11 @@ class TestRootConfigFromEnv:
             "LOXONE_PASSWORD": "pass",
             "LOXONE_PORT": "abc",
         }
-        with patch.dict(os.environ, env, clear=True):
-            with pytest.raises(ValueError, match="LOXONE_PORT must be an integer"):
-                RootConfig.from_env()
+        with (
+            patch.dict(os.environ, env, clear=True),
+            pytest.raises(ValueError, match="LOXONE_PORT must be an integer"),
+        ):
+            RootConfig.from_env()
 
     def test_out_of_range_loxone_port(self) -> None:
         env = {
@@ -197,9 +206,11 @@ class TestRootConfigFromEnv:
             "LOXONE_PASSWORD": "pass",
             "LOXONE_PORT": "99999",
         }
-        with patch.dict(os.environ, env, clear=True):
-            with pytest.raises(ValueError, match="between 1 and 65535"):
-                RootConfig.from_env()
+        with (
+            patch.dict(os.environ, env, clear=True),
+            pytest.raises(ValueError, match="between 1 and 65535"),
+        ):
+            RootConfig.from_env()
 
     def test_invalid_mcp_port(self) -> None:
         env = {
@@ -208,9 +219,11 @@ class TestRootConfigFromEnv:
             "LOXONE_PASSWORD": "pass",
             "MCP_PORT": "notanumber",
         }
-        with patch.dict(os.environ, env, clear=True):
-            with pytest.raises(ValueError, match="MCP_PORT must be an integer"):
-                RootConfig.from_env()
+        with (
+            patch.dict(os.environ, env, clear=True),
+            pytest.raises(ValueError, match="MCP_PORT must be an integer"),
+        ):
+            RootConfig.from_env()
 
     def test_invalid_transport(self) -> None:
         env = {
@@ -219,9 +232,11 @@ class TestRootConfigFromEnv:
             "LOXONE_PASSWORD": "pass",
             "MCP_TRANSPORT": "grpc",
         }
-        with patch.dict(os.environ, env, clear=True):
-            with pytest.raises(ValueError, match="MCP_TRANSPORT"):
-                RootConfig.from_env()
+        with (
+            patch.dict(os.environ, env, clear=True),
+            pytest.raises(ValueError, match="MCP_TRANSPORT"),
+        ):
+            RootConfig.from_env()
 
     def test_invalid_access_mode(self) -> None:
         env = {
@@ -230,9 +245,11 @@ class TestRootConfigFromEnv:
             "LOXONE_PASSWORD": "pass",
             "LOXONE_ACCESS_MODE": "admin",
         }
-        with patch.dict(os.environ, env, clear=True):
-            with pytest.raises(ValueError, match="LOXONE_ACCESS_MODE"):
-                RootConfig.from_env()
+        with (
+            patch.dict(os.environ, env, clear=True),
+            pytest.raises(ValueError, match="LOXONE_ACCESS_MODE"),
+        ):
+            RootConfig.from_env()
 
     def test_all_env_vars(self) -> None:
         env = {

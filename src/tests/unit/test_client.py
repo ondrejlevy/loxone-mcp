@@ -78,9 +78,11 @@ class TestFetchStructureFile:
         response = _mock_response(500, None)
         session = _mock_session(response)
 
-        with patch.object(client, "_get_session", return_value=session):
-            with pytest.raises(ConnectionError, match="Failed to fetch"):
-                await client.fetch_structure_file()
+        with (
+            patch.object(client, "_get_session", return_value=session),
+            pytest.raises(ConnectionError, match="Failed to fetch"),
+        ):
+            await client.fetch_structure_file()
 
     @patch("loxone_mcp.loxone.client.asyncio.sleep", new_callable=AsyncMock)
     async def test_fetch_connection_error_retries(self, mock_sleep: AsyncMock) -> None:
@@ -91,9 +93,11 @@ class TestFetchStructureFile:
         cm.__aexit__ = AsyncMock(return_value=False)
         session.get = MagicMock(return_value=cm)
 
-        with patch.object(client, "_get_session", return_value=session):
-            with pytest.raises(ConnectionError, match="Failed to fetch"):
-                await client.fetch_structure_file()
+        with (
+            patch.object(client, "_get_session", return_value=session),
+            pytest.raises(ConnectionError, match="Failed to fetch"),
+        ):
+            await client.fetch_structure_file()
 
 
 class TestCheckStructureChanged:
@@ -175,9 +179,11 @@ class TestSendCommand:
         cm.__aexit__ = AsyncMock(return_value=False)
         session.get = MagicMock(return_value=cm)
 
-        with patch.object(client, "_get_session", return_value=session):
-            with pytest.raises(TimeoutError):
-                await client.send_command("test")
+        with (
+            patch.object(client, "_get_session", return_value=session),
+            pytest.raises(TimeoutError),
+        ):
+            await client.send_command("test")
 
 
 class TestControlComponent:

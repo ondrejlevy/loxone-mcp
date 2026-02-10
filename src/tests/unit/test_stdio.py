@@ -6,11 +6,8 @@ Tests notification sending and transport lifecycle.
 from __future__ import annotations
 
 import asyncio
-import json
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
 
 from loxone_mcp.transport.stdio import run_stdio_transport, send_stdio_notification
 

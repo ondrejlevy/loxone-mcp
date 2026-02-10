@@ -6,12 +6,9 @@ Tests TTL expiration, LRU eviction, thread safety, and stats.
 from __future__ import annotations
 
 import time
-from typing import Any
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from loxone_mcp.state.cache import MAX_STATE_MEMORY_BYTES, StateCache
+from loxone_mcp.state.cache import StateCache
 
 
 def _mock_structure(controls: int = 5, rooms: int = 2, categories: int = 3) -> MagicMock:

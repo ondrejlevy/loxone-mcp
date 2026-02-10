@@ -15,8 +15,6 @@ from uuid import UUID
 import pytest
 
 from loxone_mcp.loxone.websocket import (
-    BINARY_HEADER_SIZE,
-    KEEPALIVE_INTERVAL,
     MSG_EVENT_TEXT_STATES,
     MSG_EVENT_VALUE_STATES,
     MSG_KEEPALIVE,
@@ -252,7 +250,7 @@ class TestProcessTextStates:
         uuid_str = "12345678-1234-1234-1234-123456789abc"
         ws._state_uuid_map = {uuid_str: ("comp-1", "text")}
 
-        payload = f"{uuid_str}\0Hello World\0".encode("utf-8")
+        payload = f"{uuid_str}\0Hello World\0".encode()
         await ws._process_text_states(payload)
 
         callback.assert_awaited_once_with("comp-1", "text", "Hello World")
@@ -263,7 +261,7 @@ class TestProcessTextStates:
         ws.register_state_callback(callback)
         ws._state_uuid_map = {}
 
-        payload = "unknown-uuid\0value\0".encode("utf-8")
+        payload = b"unknown-uuid\0value\0"
         await ws._process_text_states(payload)
 
         callback.assert_not_awaited()
@@ -302,7 +300,7 @@ class TestHandleBinaryMessage:
         callback = AsyncMock()
         ws.register_state_callback(callback)
 
-        payload = f"{uuid_str}\0hello\0".encode("utf-8")
+        payload = f"{uuid_str}\0hello\0".encode()
         header = struct.pack("<BBxx I", 0, MSG_EVENT_TEXT_STATES, len(payload))
         message = header + payload
 

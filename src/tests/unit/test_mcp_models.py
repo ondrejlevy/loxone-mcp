@@ -7,12 +7,12 @@ ResourceMimeType enum, and predefined RESOURCES/TOOLS lists.
 from __future__ import annotations
 
 from loxone_mcp.mcp.models import (
+    RESOURCES,
+    TOOLS,
     MCPNotification,
     MCPResource,
     MCPTool,
-    RESOURCES,
     ResourceMimeType,
-    TOOLS,
 )
 
 

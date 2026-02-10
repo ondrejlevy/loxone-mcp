@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 from loxone_mcp.mcp.notifications import send_resource_list_changed, send_resource_updated
 
 
