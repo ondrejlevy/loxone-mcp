@@ -54,6 +54,13 @@ class LoxoneConfig(BaseModel):
     username: str = Field(description="Loxone username")
     password: str = Field(description="Loxone password")
     use_tls: bool = Field(default=False, description="Use TLS for connections")
+    structure_endpoint: str = Field(
+        default="auto",
+        description=(
+            "Structure file endpoint path"
+            " (auto, /jdev/sps/LoxAPP3.json, or /data/LoxAPP3.json)"
+        ),
+    )
 
     @field_validator("host")
     @classmethod
@@ -220,6 +227,7 @@ class RootConfig(BaseModel):
             "username": loxone_username,
             "password": loxone_password,
             "use_tls": os.environ.get("LOXONE_USE_TLS", "false").lower() == "true",
+            "structure_endpoint": os.environ.get("LOXONE_STRUCTURE_ENDPOINT", "auto"),
         }
 
         # Server config

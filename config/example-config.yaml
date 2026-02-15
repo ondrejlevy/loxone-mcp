@@ -19,6 +19,7 @@ loxone:
   username: "mcp-user"      # Loxone username (create a dedicated user)
   password: "changeme"      # Loxone password
   use_tls: false            # Use TLS/SSL for Loxone connections
+  structure_endpoint: "auto"  # Structure file endpoint: "auto", "/jdev/sps/LoxAPP3.json", or "/data/LoxAPP3.json"
 
 # --- Access Control ---
 # Controls which MCP operations are allowed.

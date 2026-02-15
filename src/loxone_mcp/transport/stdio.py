@@ -7,7 +7,6 @@ running on the same machine as the MCP server, avoiding HTTP overhead.
 from __future__ import annotations
 
 import asyncio
-import json
 from typing import TYPE_CHECKING, Any
 
 import structlog
@@ -55,18 +54,31 @@ async def send_stdio_notification(
 ) -> None:
     """Send an MCP notification via stdout (T069).
 
+    Constructs a proper SessionMessage and sends it through the MCP SDK
+    write stream so it's serialized as a valid JSON-RPC notification.
+
     Args:
         server: LoxoneMCPServer instance
-        notification: JSON-RPC notification object
+        notification: JSON-RPC notification dict with 'method' and 'params'
     """
     write_stream = getattr(server, "_stdio_write_stream", None)
     if write_stream is None:
         return
 
     try:
-        # The MCP SDK's write_stream handles serialization
-        # For direct notification sending, we format the JSON-RPC notification
-        json.dumps(notification) + "\n"
+        from mcp.shared.session import SessionMessage  # type: ignore[attr-defined]
+        from mcp.types import JSONRPCMessage, JSONRPCNotification
+
+        # Build a proper JSON-RPC notification via the SDK types
+        jsonrpc_notification = JSONRPCNotification(
+            jsonrpc="2.0",
+            method=notification.get("method", ""),
+            params=notification.get("params"),
+        )
+        message = JSONRPCMessage(root=jsonrpc_notification)
+        session_message = SessionMessage(message=message)
+
+        await write_stream.send(session_message)
         logger.debug("stdio_notification_sent", method=notification.get("method"))
     except Exception:
         logger.exception("stdio_notification_error")

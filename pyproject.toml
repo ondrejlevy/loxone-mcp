@@ -29,6 +29,8 @@ dependencies = [
     "pydantic-settings>=2.8.0",
     "structlog>=25.1.0",
     "pyyaml>=6.0.0",
+    "starlette>=0.45.0",
+    "uvicorn>=0.34.0",
 ]
 
 [project.optional-dependencies]
@@ -41,6 +43,7 @@ dev = [
     "mypy>=1.15.0",
     "pip-audit>=2.9.0",
     "types-PyYAML>=6.0.0",
+    "httpx>=0.28.0",
 ]
 
 [project.scripts]
@@ -80,7 +83,7 @@ ignore = [
 "src/tests/**/*.py" = ["S101", "S105", "S106", "S107"]
 "src/loxone_mcp/loxone/auth.py" = ["S105"]  # Enum values for auth tiers
 "src/loxone_mcp/server.py" = ["S110"]  # Silent exception in shutdown
-"src/loxone_mcp/transport/http_sse.py" = ["S110", "ASYNC110"]  # Silent auth errors, event loop pattern
+"src/loxone_mcp/transport/streamable_http.py" = ["S110", "ASYNC110"]  # Silent auth errors, event loop pattern
 
 [tool.ruff.lint.isort]
 known-first-party = ["loxone_mcp"]
@@ -108,6 +111,8 @@ module = [
     "prometheus_client.*",
     "websockets.*",
     "aiohttp.*",
+    "starlette.*",
+    "uvicorn.*",
 ]
 ignore_missing_imports = true
 

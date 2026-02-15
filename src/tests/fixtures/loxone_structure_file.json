@@ -63,6 +63,20 @@
       "type": "heating",
       "image": "temperature.svg",
       "defaultRating": 1
+    },
+    "0f5e3a01-0303-1b0a-ffff504f9412ab34": {
+      "uuid": "0f5e3a01-0303-1b0a-ffff504f9412ab34",
+      "name": "Security",
+      "type": "security",
+      "image": "alarm.svg",
+      "defaultRating": 1
+    },
+    "0f5e3a01-0304-1b0a-ffff504f9412ab34": {
+      "uuid": "0f5e3a01-0304-1b0a-ffff504f9412ab34",
+      "name": "Energy",
+      "type": "energy",
+      "image": "energy.svg",
+      "defaultRating": 1
     }
   },
   "controls": {
@@ -138,13 +152,334 @@
       "defaultRating": 1,
       "isSecured": false,
       "states": {
-        "tempActual": "0f5e3a01-0104-1b0a-ffff504f9412ab34/tempActual",
-        "tempTarget": "0f5e3a01-0104-1b0a-ffff504f9412ab34/tempTarget",
-        "mode": "0f5e3a01-0104-1b0a-ffff504f9412ab34/mode"
+        "tempActual": "0f5e3a01-0104-1b01-ffff504f9412ab34",
+        "tempTarget": "0f5e3a01-0104-1b02-ffff504f9412ab34",
+        "mode": "0f5e3a01-0104-1b03-ffff504f9412ab34",
+        "operatingMode": "0f5e3a01-0104-1b04-ffff504f9412ab34",
+        "comfortTemperature": "0f5e3a01-0104-1b05-ffff504f9412ab34",
+        "comfortTemperatureCool": "0f5e3a01-0104-1b06-ffff504f9412ab34",
+        "frostProtectTemperature": "0f5e3a01-0104-1b07-ffff504f9412ab34",
+        "heatProtectTemperature": "0f5e3a01-0104-1b08-ffff504f9412ab34",
+        "prepareState": "0f5e3a01-0104-1b09-ffff504f9412ab34",
+        "openWindow": "0f5e3a01-0104-1b10-ffff504f9412ab34",
+        "overrideEntries": "0f5e3a01-0104-1b11-ffff504f9412ab34",
+        "overrideReason": "0f5e3a01-0104-1b12-ffff504f9412ab34"
       },
       "details": {
         "format": "%.1f°"
       },
+      "subControls": {
+        "0f5e3a01-0104-1b20-ffff504f9412ab34": {
+          "name": "Heating and Cooling",
+          "type": "IRCV2Daytimer",
+          "uuidAction": "0f5e3a01-0104-1b20-ffff504f9412ab34",
+          "defaultRating": 0,
+          "isFavorite": false,
+          "isSecured": false,
+          "details": {
+            "analog": true,
+            "format": "%.1f°"
+          },
+          "states": {
+            "entriesAndDefaultValue": "0f5e3a01-0104-1b21-ffff504f9412ab34",
+            "mode": "0f5e3a01-0104-1b22-ffff504f9412ab34",
+            "value": "0f5e3a01-0104-1b23-ffff504f9412ab34"
+          }
+        }
+      }
+    },
+    "0f5e3a01-0105-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-0105-1b0a-ffff504f9412ab34",
+      "name": "Living Room Presence",
+      "type": "PresenceDetector",
+      "room": "0f5e3a01-0288-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0303-1b0a-ffff504f9412ab34",
+      "defaultRating": 0,
+      "isSecured": false,
+      "states": {
+        "active": "0f5e3a01-0105-1b0a-ffff504f9412ab34/active",
+        "locked": "0f5e3a01-0105-1b0a-ffff504f9412ab34/locked",
+        "inUseActive": "0f5e3a01-0105-1b0a-ffff504f9412ab34/inUseActive",
+        "presenceConnected": "0f5e3a01-0105-1b0a-ffff504f9412ab34/presenceConnected",
+        "infoNrMotion": "0f5e3a01-0105-1b0a-ffff504f9412ab34/infoNrMotion",
+        "infoNrBrightness": "0f5e3a01-0105-1b0a-ffff504f9412ab34/infoNrBrightness"
+      },
+      "details": {},
+      "subControls": {
+        "0f5e3a01-0115-1b0a-ffff504f9412ab34": {
+          "name": "Motion",
+          "type": "InfoOnlyDigital",
+          "uuidAction": "0f5e3a01-0115-1b0a-ffff504f9412ab34",
+          "defaultRating": 0,
+          "isFavorite": false,
+          "isSecured": false,
+          "states": {
+            "active": "0f5e3a01-0115-1b0a-ffff504f9412ab34/active"
+          }
+        },
+        "0f5e3a01-0116-1b0a-ffff504f9412ab34": {
+          "name": "Brightness",
+          "type": "InfoOnlyAnalog",
+          "uuidAction": "0f5e3a01-0116-1b0a-ffff504f9412ab34",
+          "defaultRating": 0,
+          "isFavorite": false,
+          "isSecured": false,
+          "states": {
+            "value": "0f5e3a01-0116-1b0a-ffff504f9412ab34/value"
+          },
+          "details": {
+            "format": "%.0f Lux"
+          }
+        },
+        "0f5e3a01-0117-1b0a-ffff504f9412ab34": {
+          "name": "Noise",
+          "type": "InfoOnlyAnalog",
+          "uuidAction": "0f5e3a01-0117-1b0a-ffff504f9412ab34",
+          "defaultRating": 0,
+          "isFavorite": false,
+          "isSecured": false,
+          "states": {
+            "value": "0f5e3a01-0117-1b0a-ffff504f9412ab34/value"
+          },
+          "details": {
+            "format": "%.1f dB"
+          }
+        }
+      }
+    },
+    "0f5e3a01-0106-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-0106-1b0a-ffff504f9412ab34",
+      "name": "Living Room Window",
+      "type": "InfoOnlyDigital",
+      "room": "0f5e3a01-0288-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0303-1b0a-ffff504f9412ab34",
+      "defaultRating": 0,
+      "isSecured": false,
+      "states": {
+        "active": "0f5e3a01-0106-1b0a-ffff504f9412ab34/active",
+        "value": "0f5e3a01-0106-1b0a-ffff504f9412ab34/value"
+      },
+      "details": {},
+      "subControls": {}
+    },
+    "0f5e3a01-0107-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-0107-1b0a-ffff504f9412ab34",
+      "name": "Bedroom Window",
+      "type": "InfoOnlyDigital",
+      "room": "0f5e3a01-028a-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0303-1b0a-ffff504f9412ab34",
+      "defaultRating": 0,
+      "isSecured": false,
+      "states": {
+        "active": "0f5e3a01-0107-1b0a-ffff504f9412ab34/active",
+        "value": "0f5e3a01-0107-1b0a-ffff504f9412ab34/value"
+      },
+      "details": {},
+      "subControls": {}
+    },
+    "0f5e3a01-0108-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-0108-1b0a-ffff504f9412ab34",
+      "name": "Home Alarm",
+      "type": "Alarm",
+      "room": "0f5e3a01-0288-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0303-1b0a-ffff504f9412ab34",
+      "defaultRating": 2,
+      "isSecured": true,
+      "states": {
+        "armed": "0f5e3a01-0108-1b0a-ffff504f9412ab34/armed",
+        "level": "0f5e3a01-0108-1b0a-ffff504f9412ab34/level",
+        "nextLevel": "0f5e3a01-0108-1b0a-ffff504f9412ab34/nextLevel",
+        "nextLevelDelay": "0f5e3a01-0108-1b0a-ffff504f9412ab34/nextLevelDelay",
+        "nextLevelDelayTotal": "0f5e3a01-0108-1b0a-ffff504f9412ab34/nextLevelDelayTotal",
+        "disabledMove": "0f5e3a01-0108-1b0a-ffff504f9412ab34/disabledMove"
+      },
+      "details": {},
+      "subControls": {}
+    },
+    "0f5e3a01-0109-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-0109-1b0a-ffff504f9412ab34",
+      "name": "Grid Power Consumption",
+      "type": "InfoOnlyAnalog",
+      "room": "0f5e3a01-0288-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0304-1b0a-ffff504f9412ab34",
+      "defaultRating": 1,
+      "isSecured": false,
+      "states": {
+        "value": "0f5e3a01-0109-1b0a-ffff504f9412ab34/value"
+      },
+      "details": {
+        "format": "%.1f W"
+      },
+      "subControls": {}
+    },
+    "0f5e3a01-010a-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-010a-1b0a-ffff504f9412ab34",
+      "name": "Solar PV Production",
+      "type": "InfoOnlyAnalog",
+      "room": "0f5e3a01-0288-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0304-1b0a-ffff504f9412ab34",
+      "defaultRating": 1,
+      "isSecured": false,
+      "states": {
+        "value": "0f5e3a01-010a-1b0a-ffff504f9412ab34/value"
+      },
+      "details": {
+        "format": "%.1f W"
+      },
+      "subControls": {}
+    },
+    "0f5e3a01-010b-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-010b-1b0a-ffff504f9412ab34",
+      "name": "Battery Level",
+      "type": "InfoOnlyAnalog",
+      "room": "0f5e3a01-0288-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0304-1b0a-ffff504f9412ab34",
+      "defaultRating": 1,
+      "isSecured": false,
+      "states": {
+        "value": "0f5e3a01-010b-1b0a-ffff504f9412ab34/value"
+      },
+      "details": {
+        "format": "%.0f%%"
+      },
+      "subControls": {}
+    },
+    "0f5e3a01-010c-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-010c-1b0a-ffff504f9412ab34",
+      "name": "Kitchen Light",
+      "type": "LightController",
+      "room": "0f5e3a01-0289-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0300-1b0a-ffff504f9412ab34",
+      "defaultRating": 1,
+      "isSecured": false,
+      "states": {
+        "active": "0f5e3a01-010c-1b0a-ffff504f9412ab34/active"
+      },
+      "details": {},
+      "subControls": {}
+    },
+    "0f5e3a01-010d-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-010d-1b0a-ffff504f9412ab34",
+      "name": "Living Room Temperature",
+      "type": "InfoOnlyAnalog",
+      "room": "0f5e3a01-0288-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0302-1b0a-ffff504f9412ab34",
+      "defaultRating": 1,
+      "isSecured": false,
+      "states": {
+        "value": "0f5e3a01-010d-1b0a-ffff504f9412ab34/value"
+      },
+      "details": {
+        "format": "%.1f°C"
+      },
+      "subControls": {}
+    },
+    "0f5e3a01-010e-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-010e-1b0a-ffff504f9412ab34",
+      "name": "Living Room Blinds",
+      "type": "Jalousie",
+      "room": "0f5e3a01-0288-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0301-1b0a-ffff504f9412ab34",
+      "defaultRating": 1,
+      "isSecured": false,
+      "states": {
+        "position": "0f5e3a01-010e-1b0a-ffff504f9412ab34/position",
+        "shade": "0f5e3a01-010e-1b0a-ffff504f9412ab34/shade",
+        "up": "0f5e3a01-010e-1b0a-ffff504f9412ab34/up",
+        "down": "0f5e3a01-010e-1b0a-ffff504f9412ab34/down"
+      },
+      "details": {},
+      "subControls": {}
+    },
+    "0f5e3a01-010f-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-010f-1b0a-ffff504f9412ab34",
+      "name": "Living Room Thermostat",
+      "type": "IRoomControllerV2",
+      "room": "0f5e3a01-0288-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0302-1b0a-ffff504f9412ab34",
+      "defaultRating": 1,
+      "isSecured": false,
+      "states": {
+        "tempActual": "0f5e3a01-010f-1b01-ffff504f9412ab34",
+        "tempTarget": "0f5e3a01-010f-1b02-ffff504f9412ab34",
+        "mode": "0f5e3a01-010f-1b03-ffff504f9412ab34",
+        "operatingMode": "0f5e3a01-010f-1b04-ffff504f9412ab34",
+        "comfortTemperature": "0f5e3a01-010f-1b05-ffff504f9412ab34",
+        "comfortTemperatureCool": "0f5e3a01-010f-1b06-ffff504f9412ab34",
+        "frostProtectTemperature": "0f5e3a01-010f-1b07-ffff504f9412ab34",
+        "heatProtectTemperature": "0f5e3a01-010f-1b08-ffff504f9412ab34",
+        "prepareState": "0f5e3a01-010f-1b09-ffff504f9412ab34",
+        "openWindow": "0f5e3a01-010f-1b10-ffff504f9412ab34",
+        "overrideEntries": "0f5e3a01-010f-1b11-ffff504f9412ab34",
+        "overrideReason": "0f5e3a01-010f-1b12-ffff504f9412ab34"
+      },
+      "details": {
+        "format": "%.1f°"
+      },
+      "subControls": {
+        "0f5e3a01-010f-1b20-ffff504f9412ab34": {
+          "name": "Heating and Cooling",
+          "type": "IRCV2Daytimer",
+          "uuidAction": "0f5e3a01-010f-1b20-ffff504f9412ab34",
+          "defaultRating": 0,
+          "isFavorite": false,
+          "isSecured": false,
+          "details": {
+            "analog": true,
+            "format": "%.1f°"
+          },
+          "states": {
+            "entriesAndDefaultValue": "0f5e3a01-010f-1b21-ffff504f9412ab34",
+            "mode": "0f5e3a01-010f-1b22-ffff504f9412ab34",
+            "value": "0f5e3a01-010f-1b23-ffff504f9412ab34"
+          }
+        }
+      }
+    },
+    "0f5e3a01-0110-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-0110-1b0a-ffff504f9412ab34",
+      "name": "Living Room Audio",
+      "type": "AudioZone",
+      "room": "0f5e3a01-0288-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0300-1b0a-ffff504f9412ab34",
+      "defaultRating": 1,
+      "isSecured": false,
+      "states": {
+        "volume": "0f5e3a01-0110-1b0a-ffff504f9412ab34/volume",
+        "playing": "0f5e3a01-0110-1b0a-ffff504f9412ab34/playing",
+        "source": "0f5e3a01-0110-1b0a-ffff504f9412ab34/source"
+      },
+      "details": {},
+      "subControls": {}
+    },
+    "0f5e3a01-0111-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-0111-1b0a-ffff504f9412ab34",
+      "name": "Front Door Intercom",
+      "type": "Intercom",
+      "room": "0f5e3a01-0288-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0303-1b0a-ffff504f9412ab34",
+      "defaultRating": 2,
+      "isSecured": true,
+      "states": {
+        "active": "0f5e3a01-0111-1b0a-ffff504f9412ab34/active"
+      },
+      "details": {},
+      "subControls": {}
+    },
+    "0f5e3a01-0112-1b0a-ffff504f9412ab34": {
+      "uuidAction": "0f5e3a01-0112-1b0a-ffff504f9412ab34",
+      "name": "Kitchen Audio",
+      "type": "AudioZone",
+      "room": "0f5e3a01-0289-1b0a-ffff504f9412ab34",
+      "cat": "0f5e3a01-0300-1b0a-ffff504f9412ab34",
+      "defaultRating": 1,
+      "isSecured": false,
+      "states": {
+        "volume": "0f5e3a01-0112-1b0a-ffff504f9412ab34/volume",
+        "playing": "0f5e3a01-0112-1b0a-ffff504f9412ab34/playing",
+        "source": "0f5e3a01-0112-1b0a-ffff504f9412ab34/source"
+      },
+      "details": {},
       "subControls": {}
     }
   }

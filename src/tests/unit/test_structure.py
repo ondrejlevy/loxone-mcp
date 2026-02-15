@@ -122,7 +122,7 @@ class TestParseControls:
         comp = controls[UUID("0f5e3a01-0100-1b0a-ffff504f9412ab34")]
         assert comp.name == "Main Light"
         assert comp.type == "LightController"
-        assert comp.capabilities == ["On", "Off"]
+        assert comp.capabilities == ["changeTo/0", "changeTo/99", "plus", "changeTo"]
         assert comp.is_secured is True
         assert comp.uuid_action == "action-uuid"
 

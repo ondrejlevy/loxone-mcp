@@ -22,7 +22,7 @@ from loxone_mcp.config import (
     ServerConfig,
     StructureCacheConfig,
 )
-from loxone_mcp.loxone.models import Category, Component, Room, StructureFile
+from loxone_mcp.loxone.models import Category, Component, Room, StructureFile, uuid_to_loxone_format
 from loxone_mcp.mcp.tools import handle_call_tool
 from loxone_mcp.server import (
     AccessDeniedError,
@@ -55,7 +55,7 @@ def make_structure() -> StructureFile:
                 room=ROOM_UUID,
                 category=CATEGORY_UUID,
                 states={"active": "state-uuid-1"},
-                capabilities=["On", "Off"],
+                capabilities=["changeTo/0", "changeTo/99", "plus"],
             ),
             SWITCH_UUID: Component(
                 uuid=SWITCH_UUID,
@@ -118,8 +118,10 @@ def make_server(
     if structure:
         cache.set_structure(structure)
     server.state_manager = StateManager(cache)
-    server._http_client = AsyncMock()
+    server._http_client = MagicMock()
     server._http_client.control_component = AsyncMock(return_value={"LL": {"Code": "200"}})
+    server._http_client.fetch_component_states = AsyncMock(return_value={})
+    server._http_client.fetch_state_value = AsyncMock(return_value=None)
     return server
 
 
@@ -134,23 +136,25 @@ class TestControlComponent:
         result = await handle_call_tool(
             server,
             "control_component",
-            {"component_uuid": str(LIGHT_UUID), "action": "On"},
+            {"component_uuid": str(LIGHT_UUID), "action": "changeTo/99"},
         )
         data = json.loads(result[0].text)
         assert data["success"] is True
-        assert data["action"] == "On"
-        server._http_client.control_component.assert_called_once_with(str(LIGHT_UUID), "On")
+        assert data["action"] == "changeTo/99"
+        server._http_client.control_component.assert_called_once_with(
+            uuid_to_loxone_format(LIGHT_UUID), "changeTo/99"
+        )
 
     async def test_control_light_off(self) -> None:
         server = make_server(structure=make_structure())
         result = await handle_call_tool(
             server,
             "control_component",
-            {"component_uuid": str(LIGHT_UUID), "action": "Off"},
+            {"component_uuid": str(LIGHT_UUID), "action": "changeTo/0"},
         )
         data = json.loads(result[0].text)
         assert data["success"] is True
-        assert data["action"] == "Off"
+        assert data["action"] == "changeTo/0"
 
     async def test_control_switch_pulse(self) -> None:
         server = make_server(structure=make_structure())
@@ -186,7 +190,26 @@ class TestControlComponent:
         data = json.loads(result[0].text)
         assert data["success"] is True
         server._http_client.control_component.assert_called_once_with(
-            str(THERMOSTAT_UUID), "setManualTemperature/22.5"
+            uuid_to_loxone_format(THERMOSTAT_UUID), "setManualTemperature/22.5"
+        )
+
+    async def test_control_changeto_with_id_param(self) -> None:
+        """changeTo with params.id should append mood ID to action string."""
+        server = make_server(structure=make_structure())
+        result = await handle_call_tool(
+            server,
+            "control_component",
+            {
+                "component_uuid": str(LIGHT_UUID),
+                "action": "changeTo",
+                "params": {"id": 777},
+            },
+        )
+        data = json.loads(result[0].text)
+        assert data["success"] is True
+        assert data["action"] == "changeTo"
+        server._http_client.control_component.assert_called_once_with(
+            uuid_to_loxone_format(LIGHT_UUID), "changeTo/777"
         )
 
 
@@ -225,7 +248,7 @@ class TestActionValidation:
 
     async def test_valid_actions_listed_in_error(self) -> None:
         server = make_server(structure=make_structure())
-        with pytest.raises(ToolExecutionError, match=r"On.*Off"):
+        with pytest.raises(ToolExecutionError, match=r"changeTo"):
             await handle_call_tool(
                 server,
                 "control_component",
@@ -293,7 +316,7 @@ class TestControlAccessControl:
         result = await handle_call_tool(
             server,
             "control_component",
-            {"component_uuid": str(LIGHT_UUID), "action": "On"},
+            {"component_uuid": str(LIGHT_UUID), "action": "changeTo/99"},
         )
         data = json.loads(result[0].text)
         assert data["success"] is True
@@ -303,7 +326,7 @@ class TestControlAccessControl:
         result = await handle_call_tool(
             server,
             "control_component",
-            {"component_uuid": str(LIGHT_UUID), "action": "On"},
+            {"component_uuid": str(LIGHT_UUID), "action": "changeTo/99"},
         )
         data = json.loads(result[0].text)
         assert data["success"] is True
@@ -322,7 +345,7 @@ class TestControlErrorHandling:
             await handle_call_tool(
                 server,
                 "control_component",
-                {"component_uuid": str(LIGHT_UUID), "action": "On"},
+                {"component_uuid": str(LIGHT_UUID), "action": "changeTo/99"},
             )
 
     async def test_structure_not_loaded_raises(self) -> None:

@@ -1,1 +1,1 @@
-"""Transport implementations - stdio and HTTP/SSE."""
+"""Transport implementations - stdio and Streamable HTTP."""

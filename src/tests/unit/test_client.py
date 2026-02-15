@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from loxone_mcp.loxone.client import LoxoneClient
+from loxone_mcp.loxone.client import LoxoneClient, LoxoneCommandError
 
 
 def _make_client() -> LoxoneClient:
@@ -160,15 +160,20 @@ class TestSendCommand:
             assert result["LL"]["Code"] == "200"
 
     @patch("loxone_mcp.metrics.collector.loxone_api_duration")
-    async def test_non_200_code_still_returns(self, mock_metric: MagicMock) -> None:
+    async def test_non_200_code_raises_error(self, mock_metric: MagicMock) -> None:
         client = _make_client()
         response_data = {"LL": {"Code": "500", "value": "Error"}}
         response = _mock_response(200, response_data)
         session = _mock_session(response)
 
-        with patch.object(client, "_get_session", return_value=session):
-            result = await client.send_command("test")
-            assert result["LL"]["Code"] == "500"
+        with (
+            patch.object(client, "_get_session", return_value=session),
+            pytest.raises(LoxoneCommandError) as exc_info,
+        ):
+            await client.send_command("test")
+
+        assert exc_info.value.code == "500"
+        assert exc_info.value.command == "test"
 
     @patch("loxone_mcp.metrics.collector.loxone_api_duration")
     async def test_timeout_error(self, mock_metric: MagicMock) -> None:

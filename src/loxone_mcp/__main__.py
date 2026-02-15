@@ -90,25 +90,32 @@ async def run_stdio(server: LoxoneMCPServer) -> None:
         await server.mcp_server.run(read_stream, write_stream, init_options)
 
 
-async def run_http(server: LoxoneMCPServer) -> None:
-    """Run the MCP server over HTTP+SSE transport."""
-    from loxone_mcp.transport.http_sse import create_http_app, run_http_server
+async def run_http(
+    server: LoxoneMCPServer,
+    shutdown_event: asyncio.Event | None = None,
+) -> None:
+    """Run the MCP server over Streamable HTTP transport."""
+    from loxone_mcp.transport.streamable_http import create_starlette_app, run_http_server
 
-    app = create_http_app(server)
+    app = create_starlette_app(server)
     await run_http_server(
         app,
         host=server.config.server.host,
         port=server.config.server.port,
         tls_cert=server.config.server.tls_cert,
         tls_key=server.config.server.tls_key,
+        shutdown_event=shutdown_event,
     )
 
 
-async def run_both(server: LoxoneMCPServer) -> None:
+async def run_both(
+    server: LoxoneMCPServer,
+    shutdown_event: asyncio.Event | None = None,
+) -> None:
     """Run both stdio and HTTP transports concurrently."""
     await asyncio.gather(
         run_stdio(server),
-        run_http(server),
+        run_http(server, shutdown_event=shutdown_event),
     )
 
 
@@ -137,22 +144,29 @@ async def async_main(config: RootConfig) -> None:
         if transport == TransportType.STDIO:
             # For stdio, run until EOF or signal
             transport_task = asyncio.create_task(run_stdio(server))
-        elif transport == TransportType.BOTH:
-            transport_task = asyncio.create_task(run_both(server))
+            # Wait for either transport completion or shutdown signal
+            _done, pending = await asyncio.wait(
+                [transport_task, asyncio.create_task(shutdown_event.wait())],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            # Cancel remaining tasks (stdio has no graceful shutdown)
+            for task in pending:
+                task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await task
         else:
-            transport_task = asyncio.create_task(run_http(server))
-
-        # Wait for either transport completion or shutdown signal
-        _done, pending = await asyncio.wait(
-            [transport_task, asyncio.create_task(shutdown_event.wait())],
-            return_when=asyncio.FIRST_COMPLETED,
-        )
-
-        # Cancel remaining tasks
-        for task in pending:
-            task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await task
+            # HTTP and both: pass shutdown_event so uvicorn exits gracefully
+            # instead of being cancelled (avoids CancelledError in SSE/lifespan)
+            if transport == TransportType.BOTH:
+                transport_task = asyncio.create_task(
+                    run_both(server, shutdown_event=shutdown_event)
+                )
+            else:
+                transport_task = asyncio.create_task(
+                    run_http(server, shutdown_event=shutdown_event)
+                )
+            # Wait for uvicorn to finish its graceful shutdown
+            await transport_task
 
     except Exception:
         logger.exception("server_error")

@@ -23,9 +23,11 @@ class TestSendStdioNotification:
         server = MagicMock(spec=[])  # no _stdio_write_stream
         await send_stdio_notification(server, {"method": "test"})
 
-    async def test_with_write_stream(self) -> None:
+    async def test_with_write_stream_sends_session_message(self) -> None:
+        """Test that notifications are properly sent as SessionMessage via write_stream."""
         server = MagicMock()
-        server._stdio_write_stream = MagicMock()
+        mock_stream = AsyncMock()
+        server._stdio_write_stream = mock_stream
 
         notification = {
             "jsonrpc": "2.0",
@@ -33,15 +35,29 @@ class TestSendStdioNotification:
             "params": {"uri": "loxone://components"},
         }
         await send_stdio_notification(server, notification)
-        # Function just serializes + logs, doesn't write to stream directly in current impl
 
-    async def test_serialization_error(self) -> None:
+        # Should actually send via write_stream
+        mock_stream.send.assert_awaited_once()
+        sent_msg = mock_stream.send.call_args[0][0]
+        # Verify it's a proper SessionMessage
+        from mcp.shared.session import SessionMessage
+
+        assert isinstance(sent_msg, SessionMessage)
+        # Verify the notification method is correct
+        assert sent_msg.message.root.method == "notifications/resources/updated"
+
+    async def test_send_error_handled(self) -> None:
+        """Test that send errors are caught and logged."""
         server = MagicMock()
-        server._stdio_write_stream = MagicMock()
+        mock_stream = AsyncMock()
+        mock_stream.send.side_effect = RuntimeError("broken pipe")
+        server._stdio_write_stream = mock_stream
 
-        # Create a notification with non-serializable content
-        # The current implementation catches all exceptions
-        notification: dict[str, Any] = {"method": "test"}
+        notification: dict[str, Any] = {
+            "method": "notifications/resources/updated",
+            "params": {"uri": "loxone://test"},
+        }
+        # Should not raise
         await send_stdio_notification(server, notification)
 
 

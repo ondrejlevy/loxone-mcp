@@ -1,7 +1,8 @@
 """MCP notification sender.
 
 Sends resources/updated notifications to connected clients when
-Loxone component states change.
+Loxone component states change. Routes to both HTTP/SSE and stdio
+transport layers.
 """
 
 from __future__ import annotations
@@ -26,19 +27,27 @@ async def send_resource_updated(server: LoxoneMCPServer, uri: str) -> None:
         server: LoxoneMCPServer instance
         uri: URI of the changed resource (e.g., "loxone://components")
     """
-    notification = {
-        "jsonrpc": "2.0",
-        "method": "notifications/resources/updated",
-        "params": {"uri": uri},
-    }
-
-    # Broadcast via SSE to HTTP clients
+    # Broadcast via Streamable HTTP to connected MCP sessions
     try:
-        from loxone_mcp.transport.http_sse import broadcast_sse_notification
+        from loxone_mcp.transport.streamable_http import broadcast_notification
 
-        # Only broadcast if HTTP app is available
-        if hasattr(server, "_http_app") and server._http_app:
-            await broadcast_sse_notification(server._http_app, notification)
+        await broadcast_notification(
+            "notifications/resources/updated",
+            {"uri": uri},
+        )
+    except ImportError:
+        pass
+
+    # Send via stdio transport if connected
+    try:
+        from loxone_mcp.transport.stdio import send_stdio_notification
+
+        notification = {
+            "jsonrpc": "2.0",
+            "method": "notifications/resources/updated",
+            "params": {"uri": uri},
+        }
+        await send_stdio_notification(server, notification)
     except ImportError:
         pass
 
@@ -50,16 +59,23 @@ async def send_resource_list_changed(server: LoxoneMCPServer) -> None:
 
     Indicates that the list of available resources has changed.
     """
-    notification = {
-        "jsonrpc": "2.0",
-        "method": "notifications/resources/list_changed",
-    }
-
+    # Broadcast via Streamable HTTP to connected MCP sessions
     try:
-        from loxone_mcp.transport.http_sse import broadcast_sse_notification
+        from loxone_mcp.transport.streamable_http import broadcast_notification
 
-        if hasattr(server, "_http_app") and server._http_app:
-            await broadcast_sse_notification(server._http_app, notification)
+        await broadcast_notification("notifications/resources/list_changed")
+    except ImportError:
+        pass
+
+    # Send via stdio transport if connected
+    try:
+        from loxone_mcp.transport.stdio import send_stdio_notification
+
+        notification = {
+            "jsonrpc": "2.0",
+            "method": "notifications/resources/list_changed",
+        }
+        await send_stdio_notification(server, notification)
     except ImportError:
         pass
 

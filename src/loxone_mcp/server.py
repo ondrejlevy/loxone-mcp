@@ -56,6 +56,7 @@ class LoxoneMCPServer:
         self._structure_poll_task: asyncio.Task[None] | None = None
         self._notification_flush_task: asyncio.Task[None] | None = None
         self._stdio_write_stream: Any = None
+        self._ws_first_update_logged = False
 
     @property
     def mcp_server(self) -> Server:
@@ -151,6 +152,10 @@ class LoxoneMCPServer:
         # Build state UUID map for WebSocket binary updates
         state_map = self._build_state_uuid_map()
         self._ws_client.set_state_uuid_map(state_map)
+        logger.info(
+            "state_uuid_map_built",
+            total_entries=len(state_map),
+        )
 
         # Register WebSocket callbacks
         self._ws_client.register_state_callback(self._on_state_update)
@@ -164,8 +169,19 @@ class LoxoneMCPServer:
             await self._ws_client.connect()
             authenticated = await self._ws_client.authenticate()
             if authenticated:
+                # Start WebSocket receive loop and keepalive FIRST so the
+                # loop is ready to consume messages when binary updates are
+                # enabled.
+                self._ws_client.start_processing()
+                # Yield control so the receive-loop task actually starts
+                # before the miniserver begins its binary state burst.
+                await asyncio.sleep(0)
+
                 await self._ws_client.enable_status_updates()
                 await self._authenticator.start_token_refresh(self._refresh_token_callback)
+
+                logger.info("websocket_pipeline_active")
+
                 # Metrics (T057)
                 from loxone_mcp.metrics.collector import set_websocket_status
 
@@ -184,23 +200,77 @@ class LoxoneMCPServer:
     def _build_state_uuid_map(self) -> dict[str, tuple[str, str]]:
         """Build a mapping from state UUIDs to (component_uuid, state_key).
 
-        Used by the WebSocket client to route binary state updates.
+        Used by the WebSocket client to route binary and text state updates.
+        Keys are normalized to Python UUID format (8-4-4-4-12) for consistent
+        lookups since WebSocket binary messages produce Python-format UUIDs
+        but structure file contains Loxone-format UUIDs (8-4-4-16).
+
+        We store BOTH:
+        - The full state path (e.g., "uuid/tempActual") for text state matching
+        - The normalized UUID-only key for binary state matching
+        When multiple states share the same UUID prefix (e.g., IRoomControllerV2
+        states), the UUID-only entry won't reliably distinguish them in binary
+        updates, so we DON'T overwrite existing entries for the UUID-only key.
         """
+        from uuid import UUID as _UUID
+
         state_map: dict[str, tuple[str, str]] = {}
         structure = self._cache.structure
         if not structure:
             return state_map
 
         for comp in structure.controls.values():
+            comp_uuid_str = str(comp.uuid)
+            # Map main component states
             for state_key, state_path in comp.states.items():
-                # State paths are UUIDs or UUID/suffix patterns
-                state_uuid = state_path.split("/")[0] if "/" in state_path else state_path
-                state_map[state_uuid] = (str(comp.uuid), state_key)
+                # Always store the full path for text state matching
+                state_map[state_path] = (comp_uuid_str, state_key)
+
+                # Also store by normalized UUID-only for binary state matching
+                raw_uuid = state_path.split("/")[0] if "/" in state_path else state_path
+                try:
+                    normalized = str(_UUID(raw_uuid))
+                except ValueError:
+                    normalized = raw_uuid
+
+                # Only set UUID-only key if no collision (first state wins for
+                # binary; text updates use full path which is collision-free)
+                if normalized not in state_map:
+                    state_map[normalized] = (comp_uuid_str, state_key)
+
+            # Map subControl states (e.g. PresenceDetector sub-sensors)
+            for _sub_uuid, sub_ctrl in comp.sub_controls.items():
+                sub_states = sub_ctrl.get("states", {})
+                sub_name = sub_ctrl.get("name", "")
+                for sub_state_key, sub_state_path in sub_states.items():
+                    # Full path for text matching
+                    composite_key = f"subControl:{sub_name}/{sub_state_key}"
+                    state_map[sub_state_path] = (comp_uuid_str, composite_key)
+
+                    # UUID-only for binary matching
+                    raw_uuid = (
+                        sub_state_path.split("/")[0]
+                        if "/" in sub_state_path
+                        else sub_state_path
+                    )
+                    try:
+                        normalized = str(_UUID(raw_uuid))
+                    except ValueError:
+                        normalized = raw_uuid
+                    if normalized not in state_map:
+                        state_map[normalized] = (comp_uuid_str, composite_key)
 
         return state_map
 
     async def _on_state_update(self, component_uuid: str, state_key: str, value: Any) -> None:
         """Handle WebSocket state update → route to state manager."""
+        if not self._ws_first_update_logged:
+            self._ws_first_update_logged = True
+            logger.info(
+                "websocket_first_state_update",
+                component_uuid=component_uuid,
+                state=state_key,
+            )
         await self._state_manager.on_state_update(component_uuid, state_key, value)
 
     async def _on_ws_reconnect(self) -> None:

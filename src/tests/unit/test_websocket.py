@@ -34,6 +34,8 @@ def _make_ws() -> LoxoneWebSocket:
     authenticator.build_token_command = MagicMock(return_value="token/cmd")
     authenticator.process_token_response = MagicMock()
     authenticator.stop_token_refresh = MagicMock()
+    # authenticate_ws is the new single-method auth entry point
+    authenticator.authenticate_ws = AsyncMock(return_value=True)
     return LoxoneWebSocket(config, authenticator)
 
 
@@ -117,28 +119,16 @@ class TestAuthenticate:
         ws = _make_ws()
         mock_conn = AsyncMock()
         ws._ws = mock_conn
-
-        getkey_response = '{"LL": {"value": {"key": "abc", "salt": "def"}}}'
-        key_exchange_response = '{"LL": {"Code": "200"}}'
-        token_response = '{"LL": {"Code": "200", "value": {"token": "xyz"}}}'
-        mock_conn.recv = AsyncMock(
-            side_effect=[getkey_response, key_exchange_response, token_response]
-        )
-
+        # authenticate_ws returns True by default (set in _make_ws)
         result = await ws.authenticate()
         assert result is True
+        ws._auth.authenticate_ws.assert_awaited_once_with(mock_conn)
 
     async def test_auth_failed_code(self) -> None:
         ws = _make_ws()
         mock_conn = AsyncMock()
         ws._ws = mock_conn
-
-        getkey_response = '{"LL": {"value": {}}}'
-        key_exchange_response = '{"LL": {"Code": "200"}}'
-        token_response = '{"LL": {"Code": "401"}}'
-        mock_conn.recv = AsyncMock(
-            side_effect=[getkey_response, key_exchange_response, token_response]
-        )
+        ws._auth.authenticate_ws = AsyncMock(return_value=False)
 
         result = await ws.authenticate()
         assert result is False
@@ -147,7 +137,7 @@ class TestAuthenticate:
         ws = _make_ws()
         mock_conn = AsyncMock()
         ws._ws = mock_conn
-        mock_conn.recv = AsyncMock(side_effect=Exception("auth error"))
+        ws._auth.authenticate_ws = AsyncMock(side_effect=Exception("auth error"))
 
         result = await ws.authenticate()
         assert result is False
@@ -243,17 +233,57 @@ class TestProcessValueStates:
 
 class TestProcessTextStates:
     async def test_text_state(self) -> None:
+        """Text states use binary struct: UUID(16) + iconUUID(16) + textLen(4) + text."""
         ws = _make_ws()
         callback = AsyncMock()
         ws.register_state_callback(callback)
 
-        uuid_str = "12345678-1234-1234-1234-123456789abc"
-        ws._state_uuid_map = {uuid_str: ("comp-1", "text")}
+        test_uuid = UUID("12345678-1234-1234-1234-123456789abc")
+        # Python format used as map key
+        ws._state_uuid_map = {str(test_uuid): ("comp-1", "text")}
 
-        payload = f"{uuid_str}\0Hello World\0".encode()
+        text = b"Hello World"
+        # Build binary struct: UUID(16 LE) + icon UUID(16 LE) + text_length(4 LE) + text
+        icon_uuid = UUID(int=0)
+        payload = (
+            test_uuid.bytes_le
+            + icon_uuid.bytes_le
+            + struct.pack("<I", len(text))
+            + text
+        )
+        # Pad to 4-byte boundary
+        padding = (4 - (len(payload) % 4)) % 4
+        payload += b"\x00" * padding
+
         await ws._process_text_states(payload)
 
         callback.assert_awaited_once_with("comp-1", "text", "Hello World")
+
+    async def test_text_state_loxone_uuid_format(self) -> None:
+        """Text states should match against Loxone-format UUID keys in the map."""
+        ws = _make_ws()
+        callback = AsyncMock()
+        ws.register_state_callback(callback)
+
+        test_uuid = UUID("12345678-1234-1234-1234-123456789abc")
+        # Loxone format as map key (8-4-4-16)
+        loxone_uuid_str = "12345678-1234-1234-1234123456789abc"
+        ws._state_uuid_map = {loxone_uuid_str: ("comp-1", "text")}
+
+        text = b"test value"
+        icon_uuid = UUID(int=0)
+        payload = (
+            test_uuid.bytes_le
+            + icon_uuid.bytes_le
+            + struct.pack("<I", len(text))
+            + text
+        )
+        padding = (4 - (len(payload) % 4)) % 4
+        payload += b"\x00" * padding
+
+        await ws._process_text_states(payload)
+
+        callback.assert_awaited_once_with("comp-1", "text", "test value")
 
     async def test_unknown_text_state_skipped(self) -> None:
         ws = _make_ws()
@@ -261,10 +291,51 @@ class TestProcessTextStates:
         ws.register_state_callback(callback)
         ws._state_uuid_map = {}
 
-        payload = b"unknown-uuid\0value\0"
+        test_uuid = UUID("12345678-1234-1234-1234-123456789abc")
+        text = b"value"
+        icon_uuid = UUID(int=0)
+        payload = (
+            test_uuid.bytes_le
+            + icon_uuid.bytes_le
+            + struct.pack("<I", len(text))
+            + text
+        )
+        padding = (4 - (len(payload) % 4)) % 4
+        payload += b"\x00" * padding
+
         await ws._process_text_states(payload)
 
         callback.assert_not_awaited()
+
+    async def test_multiple_text_entries(self) -> None:
+        """Multiple text state entries parsed from a single payload."""
+        ws = _make_ws()
+        callback = AsyncMock()
+        ws.register_state_callback(callback)
+
+        uuid1 = UUID("12345678-1234-1234-1234-123456789abc")
+        uuid2 = UUID("abcdef01-2345-6789-abcd-ef0123456789")
+        ws._state_uuid_map = {
+            str(uuid1): ("comp-1", "text1"),
+            str(uuid2): ("comp-2", "text2"),
+        }
+
+        icon = UUID(int=0)
+        # Entry 1
+        text1 = b"hello"
+        entry1 = uuid1.bytes_le + icon.bytes_le + struct.pack("<I", len(text1)) + text1
+        pad1 = (4 - (len(entry1) % 4)) % 4
+        entry1 += b"\x00" * pad1
+
+        # Entry 2
+        text2 = b"world"
+        entry2 = uuid2.bytes_le + icon.bytes_le + struct.pack("<I", len(text2)) + text2
+        pad2 = (4 - (len(entry2) % 4)) % 4
+        entry2 += b"\x00" * pad2
+
+        await ws._process_text_states(entry1 + entry2)
+
+        assert callback.await_count == 2
 
 
 class TestHandleBinaryMessage:
@@ -273,7 +344,8 @@ class TestHandleBinaryMessage:
         # Less than 8 bytes header
         await ws._handle_binary_message(b"\x00\x01\x02")
 
-    async def test_value_state_message(self) -> None:
+    async def test_value_state_combined_message(self) -> None:
+        """Combined header+payload in one message (fallback/compatibility)."""
         ws = _make_ws()
         test_uuid = UUID("12345678-1234-1234-1234-123456789abc")
         ws._state_uuid_map = {str(test_uuid): ("comp-1", "value")}
@@ -292,20 +364,69 @@ class TestHandleBinaryMessage:
         ws = _make_ws()
         header = struct.pack("<BBxx I", 0, MSG_KEEPALIVE, 0)
         await ws._handle_binary_message(header)  # Should not raise
+        # Should NOT set pending header for keepalive
+        assert ws._pending_binary_header is None
 
-    async def test_text_state_message(self) -> None:
+    async def test_two_part_value_states(self) -> None:
+        """Loxone protocol: header and payload as separate messages."""
         ws = _make_ws()
-        uuid_str = "12345678-1234-1234-1234-123456789abc"
-        ws._state_uuid_map = {uuid_str: ("comp-1", "text")}
+        test_uuid = UUID("12345678-1234-1234-1234-123456789abc")
+        ws._state_uuid_map = {str(test_uuid): ("comp-1", "value")}
         callback = AsyncMock()
         ws.register_state_callback(callback)
 
-        payload = f"{uuid_str}\0hello\0".encode()
-        header = struct.pack("<BBxx I", 0, MSG_EVENT_TEXT_STATES, len(payload))
-        message = header + payload
+        payload = test_uuid.bytes_le + struct.pack("<d", 42.5)
+        header = struct.pack("<BBxx I", 3, MSG_EVENT_VALUE_STATES, len(payload))
 
-        await ws._handle_binary_message(message)
-        callback.assert_awaited_once()
+        # Step 1: Send header only — should store pending header
+        await ws._handle_binary_message(header)
+        assert ws._pending_binary_header == (MSG_EVENT_VALUE_STATES, len(payload))
+        callback.assert_not_awaited()
+
+        # Step 2: Send payload — should process and clear pending
+        await ws._handle_binary_message(payload)
+        assert ws._pending_binary_header is None
+        callback.assert_awaited_once_with("comp-1", "value", 42.5)
+
+    async def test_two_part_text_states(self) -> None:
+        """Loxone protocol: text state header + payload as separate messages."""
+        ws = _make_ws()
+        test_uuid = UUID("12345678-1234-1234-1234-123456789abc")
+        ws._state_uuid_map = {str(test_uuid): ("comp-1", "text")}
+        callback = AsyncMock()
+        ws.register_state_callback(callback)
+
+        # Build text state payload in binary struct format
+        text = b"Hello"
+        icon_uuid = UUID(int=0)
+        payload = (
+            test_uuid.bytes_le
+            + icon_uuid.bytes_le
+            + struct.pack("<I", len(text))
+            + text
+        )
+        padding = (4 - (len(payload) % 4)) % 4
+        payload += b"\x00" * padding
+
+        header = struct.pack("<BBxx I", 3, MSG_EVENT_TEXT_STATES, len(payload))
+
+        # Send header then payload
+        await ws._handle_binary_message(header)
+        assert ws._pending_binary_header is not None
+        await ws._handle_binary_message(payload)
+        assert ws._pending_binary_header is None
+        callback.assert_awaited_once_with("comp-1", "text", "Hello")
+
+    async def test_pending_header_cleared_on_stop(self) -> None:
+        ws = _make_ws()
+        ws._ws = AsyncMock()
+        ws._connected = True
+
+        # Simulate a pending header
+        ws._pending_binary_header = (MSG_EVENT_VALUE_STATES, 24)
+
+        await ws.stop()
+        assert ws._pending_binary_header is None
 
 
 class TestHandleTextMessage:
@@ -382,13 +503,7 @@ class TestReconnect:
 
         mock_conn = AsyncMock()
         mock_ws_lib.connect = AsyncMock(return_value=mock_conn)
-
-        getkey_resp = '{"LL": {"value": {}}}'
-        key_exch_resp = '{"LL": {"Code": "200"}}'
-        token_resp = '{"LL": {"Code": "200", "value": {"token": "t"}}}'
-        mock_conn.recv = AsyncMock(
-            side_effect=[getkey_resp, key_exch_resp, token_resp, "ok"]
-        )
+        # authenticate_ws returns True (default from _make_ws)
 
         callback = AsyncMock()
         ws.register_reconnect_callback(callback)
@@ -407,14 +522,7 @@ class TestReconnect:
 
         mock_conn = AsyncMock()
         mock_ws_lib.connect = AsyncMock(return_value=mock_conn)
-
-        getkey_resp = '{"LL": {"value": {}}}'
-        key_exch_resp = '{"LL": {"Code": "200"}}'
-        # Token auth fails
-        token_resp = '{"LL": {"Code": "401"}}'
-        mock_conn.recv = AsyncMock(
-            side_effect=[getkey_resp, key_exch_resp, token_resp]
-        )
+        ws._auth.authenticate_ws = AsyncMock(return_value=False)
 
         await ws._reconnect()
         # Should not crash, just logs warning
@@ -581,6 +689,23 @@ class TestStartStop:
 
         await ws.start()
 
+        assert ws._keepalive_task is not None
+        assert ws._receive_task is not None
+
+        # Cleanup
+        await ws.stop()
+        await asyncio.sleep(0)
+
+    async def test_start_processing_creates_tasks(self) -> None:
+        """start_processing() should start receive loop and keepalive on
+        an already-connected WebSocket without calling connect()."""
+        ws = _make_ws()
+        ws._ws = AsyncMock()  # Simulate already-connected state
+        ws._connected = True
+
+        ws.start_processing()
+
+        assert ws._should_run is True
         assert ws._keepalive_task is not None
         assert ws._receive_task is not None
 

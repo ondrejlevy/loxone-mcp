@@ -1,18 +1,16 @@
 """Integration tests for User Story 3: Secure Remote Access.
 
-Tests HTTP transport, SSE streaming, authentication success/failure,
-and credential passthrough.
+Tests Streamable HTTP transport, authentication, credential passthrough,
+health/metrics endpoints, and notification broadcasting.
 """
 
 from __future__ import annotations
 
-import asyncio
 import base64
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from aiohttp import web
+from starlette.testclient import TestClient
 
 from loxone_mcp.config import (
     AccessControlConfig,
@@ -25,10 +23,10 @@ from loxone_mcp.config import (
 )
 from loxone_mcp.state.cache import StateCache
 from loxone_mcp.state.manager import StateManager
-from loxone_mcp.transport.http_sse import (
-    SSE_CLIENTS_KEY,
-    broadcast_sse_notification,
-    create_http_app,
+from loxone_mcp.transport.streamable_http import (
+    _active_write_streams,
+    broadcast_notification,
+    create_starlette_app,
     extract_credentials,
 )
 
@@ -52,6 +50,11 @@ def make_mock_server() -> MagicMock:
     server._ws_client = MagicMock()
     server._ws_client.is_connected = True
     server._http_client = AsyncMock()
+
+    # Mock mcp_server for StreamableHTTPSessionManager
+    mcp_server = MagicMock()
+    mcp_server.run = AsyncMock()
+    server.mcp_server = mcp_server
     return server
 
 
@@ -61,58 +64,60 @@ def make_mock_server() -> MagicMock:
 class TestCredentialExtraction:
     """Tests for HTTP header authentication extraction."""
 
-    def test_custom_headers(self) -> None:
+    def _make_request(self, headers: dict[str, str]) -> MagicMock:
+        """Create a mock Starlette Request with headers."""
         request = MagicMock()
-        request.headers = {
-            "X-Loxone-Username": "admin",
-            "X-Loxone-Password": "secret123",
-        }
+        lower_headers = {k.lower(): v for k, v in headers.items()}
+        request.headers = MagicMock()
+        request.headers.get = lambda key, default="": lower_headers.get(key.lower(), default)
+        return request
+
+    def test_custom_headers(self) -> None:
+        request = self._make_request(
+            {
+                "X-Loxone-Username": "admin",
+                "X-Loxone-Password": "secret123",
+            }
+        )
         username, password = extract_credentials(request)
         assert username == "admin"
         assert password == "secret123"
 
     def test_basic_auth_header(self) -> None:
-        request = MagicMock()
         credentials = base64.b64encode(b"admin:secret123").decode("utf-8")
-        request.headers = {
-            "Authorization": f"Basic {credentials}",
-        }
+        request = self._make_request({"Authorization": f"Basic {credentials}"})
         username, password = extract_credentials(request)
         assert username == "admin"
         assert password == "secret123"
 
     def test_basic_auth_with_colon_in_password(self) -> None:
-        request = MagicMock()
         credentials = base64.b64encode(b"admin:pass:word:123").decode("utf-8")
-        request.headers = {
-            "Authorization": f"Basic {credentials}",
-        }
+        request = self._make_request({"Authorization": f"Basic {credentials}"})
         username, password = extract_credentials(request)
         assert username == "admin"
         assert password == "pass:word:123"
 
     def test_no_credentials(self) -> None:
-        request = MagicMock()
-        request.headers = {}
+        request = self._make_request({})
         username, password = extract_credentials(request)
         assert username is None
         assert password is None
 
     def test_invalid_basic_auth(self) -> None:
-        request = MagicMock()
-        request.headers = {"Authorization": "Basic invalid-base64!!!"}
+        request = self._make_request({"Authorization": "Basic invalid-base64!!!"})
         username, password = extract_credentials(request)
         assert username is None
         assert password is None
 
     def test_custom_headers_take_priority(self) -> None:
-        request = MagicMock()
         credentials = base64.b64encode(b"basic_user:basic_pass").decode("utf-8")
-        request.headers = {
-            "X-Loxone-Username": "custom_user",
-            "X-Loxone-Password": "custom_pass",
-            "Authorization": f"Basic {credentials}",
-        }
+        request = self._make_request(
+            {
+                "X-Loxone-Username": "custom_user",
+                "X-Loxone-Password": "custom_pass",
+                "Authorization": f"Basic {credentials}",
+            }
+        )
         username, password = extract_credentials(request)
         assert username == "custom_user"
         assert password == "custom_pass"
@@ -122,105 +127,135 @@ class TestCredentialExtraction:
 
 
 class TestHTTPTransport:
-    """Tests for HTTP endpoint handling."""
+    """Tests for Streamable HTTP endpoint handling."""
 
     @pytest.fixture
-    def app(self) -> web.Application:
+    def app_client(self) -> TestClient:
         server = make_mock_server()
-        return create_http_app(server)
+        app = create_starlette_app(server)
+        return TestClient(app, raise_server_exceptions=False)
 
-    async def test_health_endpoint(self, aiohttp_client: Any, app: web.Application) -> None:
-        client = await aiohttp_client(app)
-        response = await client.get("/health")
-        assert response.status == 200
-        data = await response.json()
+    def test_health_endpoint(self, app_client: TestClient) -> None:
+        response = app_client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
         assert data["status"] == "ok"
         assert "websocket_connected" in data
 
-    async def test_mcp_post_invalid_json(
-        self, aiohttp_client: Any, app: web.Application
-    ) -> None:
-        client = await aiohttp_client(app)
-        response = await client.post(
-            "/mcp", data="not-json", headers={"Content-Type": "application/json"}
-        )
-        assert response.status == 400
-        data = await response.json()
-        assert data["error"]["code"] == -32700
-
-    async def test_mcp_ping(self, aiohttp_client: Any, app: web.Application) -> None:
-        client = await aiohttp_client(app)
-        response = await client.post(
+    def test_mcp_post_without_session(self, app_client: TestClient) -> None:
+        """POST to /mcp without initialize should get protocol error from SDK."""
+        response = app_client.post(
             "/mcp",
-            json={"jsonrpc": "2.0", "method": "ping", "id": 1},
+            json={"jsonrpc": "2.0", "method": "tools/list", "id": 1},
+            headers={
+                "Accept": "application/json, text/event-stream",
+                "Content-Type": "application/json",
+            },
         )
-        assert response.status == 200
-        data = await response.json()
-        assert data["id"] == 1
+        # SDK handles the error — returns 4xx
+        assert response.status_code >= 400
 
-    async def test_mcp_initialize(self, aiohttp_client: Any, app: web.Application) -> None:
-        client = await aiohttp_client(app)
-        response = await client.post(
+    def test_mcp_post_invalid_content_type(self, app_client: TestClient) -> None:
+        """POST with wrong content type should return error."""
+        response = app_client.post(
             "/mcp",
-            json={"jsonrpc": "2.0", "method": "initialize", "id": 1},
+            content="not-json",
+            headers={
+                "Content-Type": "text/plain",
+                "Accept": "application/json, text/event-stream",
+            },
         )
-        assert response.status == 200
-        data = await response.json()
-        assert data["result"]["serverInfo"]["name"] == "loxone-mcp"
-        assert "resources" in data["result"]["capabilities"]
+        assert response.status_code >= 400
 
-    async def test_cors_preflight(self, aiohttp_client: Any, app: web.Application) -> None:
-        client = await aiohttp_client(app)
-        response = await client.options("/mcp")
-        assert response.status == 204
-
-    async def test_mcp_unknown_method(
-        self, aiohttp_client: Any, app: web.Application
-    ) -> None:
-        client = await aiohttp_client(app)
-        response = await client.post(
+    def test_cors_preflight(self, app_client: TestClient) -> None:
+        response = app_client.options(
             "/mcp",
-            json={"jsonrpc": "2.0", "method": "nonexistent/method", "id": 99},
+            headers={
+                "Origin": "http://localhost:3000",
+                "Access-Control-Request-Method": "POST",
+            },
         )
-        assert response.status == 500
-        data = await response.json()
-        assert data["error"]["code"] == -32603
+        assert response.status_code == 200
+        assert "access-control-allow-origin" in response.headers
+
+    def test_metrics_endpoint(self, app_client: TestClient) -> None:
+        response = app_client.get("/metrics")
+        assert response.status_code == 200
+        assert "text/plain" in response.headers["content-type"]
+
+    def test_mcp_get_without_session_returns_error(self, app_client: TestClient) -> None:
+        """GET to /mcp without valid session returns error."""
+        response = app_client.get("/mcp")
+        assert response.status_code >= 400
+
+    def test_mcp_delete_without_session_returns_error(self, app_client: TestClient) -> None:
+        """DELETE to /mcp without valid session returns error."""
+        response = app_client.delete(
+            "/mcp",
+            headers={"Mcp-Session-Id": "nonexistent"},
+        )
+        assert response.status_code >= 400
 
 
-# --- SSE Tests ---
+# --- Notification Broadcasting Tests ---
 
 
-class TestSSEBroadcast:
-    """Tests for SSE notification broadcasting."""
+class TestNotificationBroadcast:
+    """Tests for server-initiated notification broadcasting."""
 
-    async def test_broadcast_to_empty_clients(self) -> None:
-        app = web.Application()
-        app[SSE_CLIENTS_KEY] = []
-        await broadcast_sse_notification(app, {"method": "test"})
-        # Should not raise
+    async def test_broadcast_to_empty_sessions(self) -> None:
+        """Broadcasting with no active sessions should not raise."""
+        _active_write_streams.clear()
+        await broadcast_notification("notifications/resources/updated", {"uri": "loxone://test"})
 
     async def test_broadcast_queues_notification(self) -> None:
-        app = web.Application()
-        queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
-        app[SSE_CLIENTS_KEY] = [queue]
-        await broadcast_sse_notification(app, {"method": "notifications/resources/updated"})
-        assert not queue.empty()
-        notification = await queue.get()
-        assert notification["method"] == "notifications/resources/updated"
+        """Notification should be sent to all active write streams."""
+        _active_write_streams.clear()
 
-    async def test_broadcast_to_multiple_clients(self) -> None:
-        app = web.Application()
-        q1: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
-        q2: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
-        app[SSE_CLIENTS_KEY] = [q1, q2]
-        await broadcast_sse_notification(app, {"method": "test_multi"})
-        assert (await q1.get())["method"] == "test_multi"
-        assert (await q2.get())["method"] == "test_multi"
+        mock_ws = AsyncMock()
+        _active_write_streams.add(mock_ws)
 
-    async def test_broadcast_full_queue_does_not_raise(self) -> None:
-        app = web.Application()
-        queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(maxsize=1)
-        queue.put_nowait({"method": "existing"})  # fill the queue
-        app[SSE_CLIENTS_KEY] = [queue]
-        # Should not raise even though queue is full
-        await broadcast_sse_notification(app, {"method": "dropped"})
+        try:
+            await broadcast_notification(
+                "notifications/resources/updated",
+                {"uri": "loxone://components"},
+            )
+            mock_ws.send.assert_called_once()
+            msg = mock_ws.send.call_args[0][0]
+            assert msg.message.root.method == "notifications/resources/updated"
+        finally:
+            _active_write_streams.clear()
+
+    async def test_broadcast_to_multiple_sessions(self) -> None:
+        """Notification should reach all sessions."""
+        _active_write_streams.clear()
+
+        ws1 = AsyncMock()
+        ws2 = AsyncMock()
+        _active_write_streams.add(ws1)
+        _active_write_streams.add(ws2)
+
+        try:
+            await broadcast_notification("notifications/resources/list_changed")
+            ws1.send.assert_called_once()
+            ws2.send.assert_called_once()
+        finally:
+            _active_write_streams.clear()
+
+    async def test_broadcast_dead_session_cleanup(self) -> None:
+        """Dead sessions should be cleaned up without affecting live ones."""
+        _active_write_streams.clear()
+
+        good = AsyncMock()
+        dead = AsyncMock()
+        dead.send.side_effect = Exception("closed")
+        _active_write_streams.add(good)
+        _active_write_streams.add(dead)
+
+        try:
+            await broadcast_notification("notifications/resources/updated", {"uri": "test"})
+            good.send.assert_called_once()
+            assert dead not in _active_write_streams
+            assert good in _active_write_streams
+        finally:
+            _active_write_streams.clear()

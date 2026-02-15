@@ -452,6 +452,286 @@ All errors follow consistent format:
 
 ---
 
-**Contract Version**: 1.0  
+**Contract Version**: 2.0  
 **Last Updated**: 2026-02-10  
 **Status**: Complete
+
+### 5. List Rooms
+
+**Name**: `list_rooms`  
+**Description**: List all rooms in the Loxone smart home with UUIDs, names, and component counts  
+**Category**: Query
+
+**Input Schema**: No required parameters
+
+**Example Response**:
+```json
+{
+  "roomCount": 4,
+  "rooms": [
+    {"uuid": "...", "name": "Living Room", "type": 1, "componentCount": 5},
+    {"uuid": "...", "name": "Kitchen", "type": 0, "componentCount": 2}
+  ]
+}
+```
+
+---
+
+### 6. Get Room by Name
+
+**Name**: `get_room_by_name`  
+**Description**: Find a room by name (case-insensitive, partial match) and return details with all components  
+**Category**: Query
+
+**Input Schema**:
+```json
+{
+  "type": "object",
+  "properties": {
+    "room_name": {"type": "string", "description": "Room name or partial name"}
+  },
+  "required": ["room_name"]
+}
+```
+
+**Example Request**: `{"room_name": "Living"}`
+
+**Example Response**:
+```json
+{
+  "room": {"uuid": "...", "name": "Living Room", "type": 1},
+  "componentCount": 5,
+  "components": [
+    {"uuid": "...", "name": "Living Room Light", "type": "LightController", "currentState": {"active": 1}, "capabilities": ["On", "Off"]}
+  ]
+}
+```
+
+---
+
+### 7. Get Lights Status
+
+**Name**: `get_lights_status`  
+**Description**: Get light status across the home or filtered by room name  
+**Category**: Query
+
+**Input Schema**:
+```json
+{
+  "type": "object",
+  "properties": {
+    "room_name": {"type": "string", "description": "Optional room name filter"}
+  }
+}
+```
+
+**Example Response**:
+```json
+{
+  "totalLights": 6,
+  "lightsOn": 2,
+  "lightsOff": 4,
+  "room": "all",
+  "lights": [
+    {"uuid": "...", "name": "Living Room Light", "type": "LightController", "room": "Living Room", "isOn": true, "brightness": 75.5}
+  ]
+}
+```
+
+---
+
+### 8. Control Room Lights
+
+**Name**: `control_room_lights`  
+**Description**: Turn all lights in a specific room on or off  
+**Category**: Action
+
+**Input Schema**:
+```json
+{
+  "type": "object",
+  "properties": {
+    "room_name": {"type": "string"},
+    "action": {"type": "string", "enum": ["On", "Off"]}
+  },
+  "required": ["room_name", "action"]
+}
+```
+
+**Example Request**: `{"room_name": "Kitchen", "action": "Off"}`
+
+**Example Response**:
+```json
+{
+  "room": "Kitchen",
+  "action": "Off",
+  "totalLights": 2,
+  "successful": 2,
+  "failed": 0,
+  "results": [{"uuid": "...", "name": "Kitchen Light", "success": true}]
+}
+```
+
+---
+
+### 9. Get Temperatures
+
+**Name**: `get_temperatures`  
+**Description**: Get temperature readings from all rooms or a specific room  
+**Category**: Query
+
+**Input Schema**:
+```json
+{
+  "type": "object",
+  "properties": {
+    "room_name": {"type": "string", "description": "Optional room name filter"}
+  }
+}
+```
+
+**Example Response**:
+```json
+{
+  "sensorCount": 3,
+  "room": "all",
+  "temperatures": [
+    {"uuid": "...", "name": "Bathroom Thermostat", "type": "IRoomControllerV2", "room": "Bathroom", "actualTemperature": 21.5, "targetTemperature": 22.0, "mode": 1, "modeText": "Comfort heating"}
+  ]
+}
+```
+
+---
+
+### 10. Get Presence Status
+
+**Name**: `get_presence_status`  
+**Description**: Get motion/presence detection status across all rooms or a specific room  
+**Category**: Query
+
+**Input Schema**:
+```json
+{
+  "type": "object",
+  "properties": {
+    "room_name": {"type": "string", "description": "Optional room name filter"}
+  }
+}
+```
+
+**Example Response**:
+```json
+{
+  "sensorCount": 2,
+  "room": "all",
+  "roomsWithPresence": ["Living Room"],
+  "presenceDetected": true,
+  "sensors": [
+    {"uuid": "...", "name": "Living Room Presence", "room": "Living Room", "isActive": true}
+  ]
+}
+```
+
+---
+
+### 11. Get Window/Door Status
+
+**Name**: `get_window_door_status`  
+**Description**: Get open/closed status of all windows and doors  
+**Category**: Query
+
+**Input Schema**:
+```json
+{
+  "type": "object",
+  "properties": {
+    "room_name": {"type": "string", "description": "Optional room name filter"}
+  }
+}
+```
+
+**Example Response**:
+```json
+{
+  "sensorCount": 4,
+  "room": "all",
+  "openCount": 1,
+  "closedCount": 3,
+  "allClosed": false,
+  "openItems": [{"name": "Living Room Window", "room": "Living Room"}],
+  "sensors": [{"uuid": "...", "name": "Living Room Window", "room": "Living Room", "isOpen": true}]
+}
+```
+
+---
+
+### 12. Get Alarm Status
+
+**Name**: `get_alarm_status`  
+**Description**: Get the current status of all alarm/security systems  
+**Category**: Query
+
+**Input Schema**: No required parameters
+
+**Example Response**:
+```json
+{
+  "alarmCount": 1,
+  "anyArmed": false,
+  "anyTriggered": false,
+  "alarms": [
+    {"uuid": "...", "name": "Home Alarm", "type": "Alarm", "isArmed": false, "alarmLevel": 0, "isTriggered": false}
+  ]
+}
+```
+
+---
+
+### 13. Control Alarm
+
+**Name**: `control_alarm`  
+**Description**: Arm or disarm the home security/alarm system  
+**Category**: Action
+
+**Input Schema**:
+```json
+{
+  "type": "object",
+  "properties": {
+    "alarm_name": {"type": "string", "description": "Optional alarm name"},
+    "action": {"type": "string", "enum": ["On", "Off", "delayedon", "quit"]}
+  },
+  "required": ["action"]
+}
+```
+
+**Actions**:
+- `On`: Arm immediately
+- `Off`: Disarm
+- `delayedon`: Arm with entry delay
+- `quit`: Acknowledge/silence alarm
+
+---
+
+### 14. Get Energy Status
+
+**Name**: `get_energy_status`  
+**Description**: Get energy consumption, production, and battery status  
+**Category**: Query
+
+**Input Schema**: No required parameters
+
+**Example Response**:
+```json
+{
+  "componentCount": 3,
+  "summary": {
+    "gridConsumption": 2450.5,
+    "solarProduction": 3200.0,
+    "batteryLevel": 78.5
+  },
+  "components": [
+    {"uuid": "...", "name": "Grid Power Consumption", "type": "InfoOnlyAnalog", "category": "grid_consumption", "currentState": {"value": 2450.5}}
+  ]
+}
+```

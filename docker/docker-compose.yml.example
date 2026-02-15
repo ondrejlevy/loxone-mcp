@@ -1,0 +1,54 @@
+# Docker Compose example for Loxone MCP Server
+# Usage: docker compose -f docker/docker-compose.yml up
+#
+# Environment variables can be set in .env file or passed directly.
+
+services:
+  loxone-mcp:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: loxone-mcp
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - LOXONE_HOST=${LOXONE_HOST}
+      - LOXONE_PORT=${LOXONE_PORT:-80}
+      - LOXONE_USERNAME=${LOXONE_USERNAME}
+      - LOXONE_PASSWORD=${LOXONE_PASSWORD}
+      - LOXONE_STRUCTURE_ENDPOINT=${LOXONE_STRUCTURE_ENDPOINT:-auto}
+      - LOXONE_ACCESS_MODE=${LOXONE_ACCESS_MODE:-read-write}
+      - MCP_TRANSPORT=http
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=8080
+      - MCP_LOG_LEVEL=${MCP_LOG_LEVEL:-INFO}
+      - METRICS_ENABLED=${METRICS_ENABLED:-true}
+      - AUDIT_ENABLED=${AUDIT_ENABLED:-true}
+      - AUDIT_RETENTION_DAYS=${AUDIT_RETENTION_DAYS:-90}
+    volumes:
+      - audit-logs:/app/logs
+      - ./config:/app/config:ro
+    deploy:
+      resources:
+        limits:
+          memory: 200M
+          cpus: "0.5"
+        reservations:
+          memory: 64M
+          cpus: "0.1"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=10M
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  audit-logs:
+    driver: local

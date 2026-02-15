@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import time
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -206,10 +206,11 @@ class TestGetMetrics:
 
 
 class TestMetricsEndpoint:
-    """Test /metrics HTTP endpoint via aiohttp."""
+    """Test /metrics HTTP endpoint via Starlette TestClient."""
 
     @pytest.fixture
-    def app(self) -> Any:
+    def app_client(self) -> Any:
+        from starlette.testclient import TestClient
 
         from loxone_mcp.config import (
             AccessControlConfig,
@@ -222,7 +223,7 @@ class TestMetricsEndpoint:
         )
         from loxone_mcp.state.cache import StateCache
         from loxone_mcp.state.manager import StateManager
-        from loxone_mcp.transport.http_sse import create_http_app
+        from loxone_mcp.transport.streamable_http import create_starlette_app
 
         server = MagicMock()
         server.config = RootConfig(
@@ -238,20 +239,20 @@ class TestMetricsEndpoint:
         server._cache = cache
         server._ws_client = MagicMock()
         server._ws_client.is_connected = True
-        return create_http_app(server)
+        mcp_server = MagicMock()
+        mcp_server.run = AsyncMock()
+        server.mcp_server = mcp_server
+        app = create_starlette_app(server)
+        return TestClient(app, raise_server_exceptions=False)
 
-    async def test_metrics_endpoint_returns_200(self, aiohttp_client: Any, app: Any) -> None:
-        client = await aiohttp_client(app)
-        response = await client.get("/metrics")
-        assert response.status == 200
+    def test_metrics_endpoint_returns_200(self, app_client: Any) -> None:
+        response = app_client.get("/metrics")
+        assert response.status_code == 200
 
-    async def test_metrics_endpoint_content_type(self, aiohttp_client: Any, app: Any) -> None:
-        client = await aiohttp_client(app)
-        response = await client.get("/metrics")
-        assert "text/plain" in response.headers["Content-Type"]
+    def test_metrics_endpoint_content_type(self, app_client: Any) -> None:
+        response = app_client.get("/metrics")
+        assert "text/plain" in response.headers["content-type"]
 
-    async def test_metrics_endpoint_body(self, aiohttp_client: Any, app: Any) -> None:
-        client = await aiohttp_client(app)
-        response = await client.get("/metrics")
-        body = await response.text()
-        assert "mcp_requests_total" in body
+    def test_metrics_endpoint_body(self, app_client: Any) -> None:
+        response = app_client.get("/metrics")
+        assert "mcp_requests_total" in response.text

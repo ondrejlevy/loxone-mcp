@@ -101,7 +101,12 @@ def make_server(
     if structure:
         cache.set_structure(structure)
     server.state_manager = StateManager(cache)
-    server._http_client = AsyncMock()
+    server._http_client = MagicMock()
+    server._http_client.control_component = AsyncMock(
+        return_value={"LL": {"Code": "200", "value": "OK"}}
+    )
+    server._http_client.fetch_component_states = AsyncMock(return_value={})
+    server._http_client.fetch_state_value = AsyncMock(return_value=None)
     return server
 
 
@@ -280,10 +285,10 @@ class TestResourceAccessControl:
 class TestToolList:
     """Tests for get_tool_list."""
 
-    async def test_returns_four_tools(self) -> None:
+    async def test_returns_all_tools(self) -> None:
         server = make_server()
         tools = await get_tool_list(server)
-        assert len(tools) == 4
+        assert len(tools) == 29
 
     async def test_tool_names(self) -> None:
         server = make_server()
@@ -294,6 +299,31 @@ class TestToolList:
             "control_component",
             "get_room_components",
             "get_components_by_type",
+            "list_rooms",
+            "get_room_by_name",
+            "get_lights_status",
+            "control_room_lights",
+            "get_temperatures",
+            "get_presence_status",
+            "get_window_door_status",
+            "get_alarm_status",
+            "control_alarm",
+            "get_energy_status",
+            "control_room_blinds",
+            "set_room_temperature",
+            "set_hvac_mode",
+            "get_blinds_status",
+            "control_all_lights",
+            "get_home_summary",
+            "set_lighting_mood",
+            "dim_light",
+            "set_slat_position",
+            "execute_scene",
+            "control_audio",
+            "control_intercom",
+            "enable_presence_simulation",
+            "get_history",
+            "subscribe_notification",
         }
 
 
@@ -398,7 +428,7 @@ class TestGetComponentsByType:
         data = json.loads(result[0].text)
         assert data["type"] == "LightController"
         assert data["componentCount"] == 1
-        assert data["validActions"] == ["On", "Off"]
+        assert data["validActions"] == ["changeTo/0", "changeTo/99", "plus", "changeTo"]
 
     async def test_no_components_of_type(self) -> None:
         structure = make_structure()

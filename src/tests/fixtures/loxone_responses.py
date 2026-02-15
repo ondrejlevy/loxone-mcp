@@ -26,6 +26,27 @@ SWITCH_UUID = UUID("0f5e3a01-0101-1b0a-ffff504f9412ab34")
 BLINDS_UUID = UUID("0f5e3a01-0102-1b0a-ffff504f9412ab34")
 DIMMER_UUID = UUID("0f5e3a01-0103-1b0a-ffff504f9412ab34")
 THERMOSTAT_UUID = UUID("0f5e3a01-0104-1b0a-ffff504f9412ab34")
+PRESENCE_UUID = UUID("0f5e3a01-0105-1b0a-ffff504f9412ab34")
+PRESENCE_MOTION_UUID = UUID("0f5e3a01-0115-1b0a-ffff504f9412ab34")
+PRESENCE_BRIGHTNESS_UUID = UUID("0f5e3a01-0116-1b0a-ffff504f9412ab34")
+PRESENCE_NOISE_UUID = UUID("0f5e3a01-0117-1b0a-ffff504f9412ab34")
+WINDOW_LR_UUID = UUID("0f5e3a01-0106-1b0a-ffff504f9412ab34")
+WINDOW_BR_UUID = UUID("0f5e3a01-0107-1b0a-ffff504f9412ab34")
+ALARM_UUID = UUID("0f5e3a01-0108-1b0a-ffff504f9412ab34")
+GRID_POWER_UUID = UUID("0f5e3a01-0109-1b0a-ffff504f9412ab34")
+SOLAR_PV_UUID = UUID("0f5e3a01-010a-1b0a-ffff504f9412ab34")
+BATTERY_UUID = UUID("0f5e3a01-010b-1b0a-ffff504f9412ab34")
+KITCHEN_LIGHT_UUID = UUID("0f5e3a01-010c-1b0a-ffff504f9412ab34")
+LR_TEMP_UUID = UUID("0f5e3a01-010d-1b0a-ffff504f9412ab34")
+
+LR_BLINDS_UUID = UUID("0f5e3a01-010e-1b0a-ffff504f9412ab34")
+LR_THERMOSTAT_UUID = UUID("0f5e3a01-010f-1b0a-ffff504f9412ab34")
+LR_AUDIO_UUID = UUID("0f5e3a01-0110-1b0a-ffff504f9412ab34")
+INTERCOM_UUID = UUID("0f5e3a01-0111-1b0a-ffff504f9412ab34")
+KITCHEN_AUDIO_UUID = UUID("0f5e3a01-0112-1b0a-ffff504f9412ab34")
+
+SECURITY_CAT_UUID = UUID("0f5e3a01-0303-1b0a-ffff504f9412ab34")
+ENERGY_CAT_UUID = UUID("0f5e3a01-0304-1b0a-ffff504f9412ab34")
 
 FIXTURES_DIR = Path(__file__).parent
 
@@ -75,6 +96,86 @@ def make_state_values() -> dict[str, dict[str, Any]]:
             "tempActual": 21.5,
             "tempTarget": 22.0,
             "mode": 1,
+            "operatingMode": 1,
+            "comfortTemperature": 22.0,
+            "comfortTemperatureCool": 25.0,
+            "frostProtectTemperature": 5.0,
+            "heatProtectTemperature": 38.0,
+            "prepareState": 0,
+            "openWindow": 0,
+        },
+        str(PRESENCE_UUID): {
+            "active": 1,
+            "locked": 0,
+            "inUseActive": 0,
+            "presenceConnected": 1,
+            "infoNrMotion": 1,
+            "infoNrBrightness": 342.0,
+            "subControl:Motion/active": 1,
+            "subControl:Brightness/value": 342.0,
+            "subControl:Noise/value": 28.5,
+        },
+        str(WINDOW_LR_UUID): {
+            "active": 1,
+            "value": 1,
+        },
+        str(WINDOW_BR_UUID): {
+            "active": 0,
+            "value": 0,
+        },
+        str(ALARM_UUID): {
+            "armed": 0,
+            "level": 0,
+            "nextLevel": 0,
+            "nextLevelDelay": 0,
+            "nextLevelDelayTotal": 0,
+            "disabledMove": 0,
+        },
+        str(GRID_POWER_UUID): {
+            "value": 2450.5,
+        },
+        str(SOLAR_PV_UUID): {
+            "value": 3200.0,
+        },
+        str(BATTERY_UUID): {
+            "value": 78.5,
+        },
+        str(KITCHEN_LIGHT_UUID): {
+            "active": 0,
+        },
+        str(LR_TEMP_UUID): {
+            "value": 22.3,
+        },
+        str(LR_BLINDS_UUID): {
+            "position": 20.0,
+            "shade": 50.0,
+            "up": 0,
+            "down": 0,
+        },
+        str(LR_THERMOSTAT_UUID): {
+            "tempActual": 23.1,
+            "tempTarget": 22.0,
+            "mode": 1,
+            "operatingMode": 1,
+            "comfortTemperature": 22.0,
+            "comfortTemperatureCool": 25.0,
+            "frostProtectTemperature": 5.0,
+            "heatProtectTemperature": 38.0,
+            "prepareState": 0,
+            "openWindow": 1,
+        },
+        str(LR_AUDIO_UUID): {
+            "volume": 45,
+            "playing": 1,
+            "source": "Spotify",
+        },
+        str(INTERCOM_UUID): {
+            "active": 0,
+        },
+        str(KITCHEN_AUDIO_UUID): {
+            "volume": 30,
+            "playing": 0,
+            "source": "",
         },
     }
 

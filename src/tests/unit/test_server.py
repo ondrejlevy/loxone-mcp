@@ -296,6 +296,7 @@ class TestInitialize:
         ws_client.connect = AsyncMock()
         ws_client.authenticate = AsyncMock(return_value=True)
         ws_client.enable_status_updates = AsyncMock()
+        ws_client.start_processing = MagicMock()
         server._ws_client = ws_client
 
         state_mgr = MagicMock()
@@ -315,6 +316,7 @@ class TestInitialize:
         ws_client.connect.assert_awaited_once()
         ws_client.authenticate.assert_awaited_once()
         ws_client.enable_status_updates.assert_awaited_once()
+        ws_client.start_processing.assert_called_once()
 
         # Cleanup background tasks
         if server._structure_poll_task:

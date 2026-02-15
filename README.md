@@ -72,6 +72,131 @@ cd docker
 docker compose up -d
 ```
 
+## MCP Client Configuration
+
+Examples for connecting AI clients to the Loxone MCP Server.
+
+### VS Code (GitHub Copilot)
+
+Add to `.vscode/mcp.json` in your project:
+
+```json
+{
+  "servers": {
+    "loxone": {
+      "command": "python",
+      "args": ["-m", "loxone_mcp", "--transport", "stdio"],
+      "env": {
+        "LOXONE_HOST": "192.168.1.100",
+        "LOXONE_USERNAME": "mcp-user",
+        "LOXONE_PASSWORD": "your-password"
+      }
+    }
+  }
+}
+```
+
+Or connect to a running HTTP server:
+
+```json
+{
+  "servers": {
+    "loxone": {
+      "type": "sse",
+      "url": "http://localhost:8080/sse"
+    }
+  }
+}
+```
+
+### Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+
+```json
+{
+  "mcpServers": {
+    "loxone": {
+      "command": "python",
+      "args": ["-m", "loxone_mcp", "--transport", "stdio"],
+      "env": {
+        "LOXONE_HOST": "192.168.1.100",
+        "LOXONE_USERNAME": "mcp-user",
+        "LOXONE_PASSWORD": "your-password"
+      }
+    }
+  }
+}
+```
+
+### Claude Code
+
+Add to `.mcp.json` in your project root (project scope) or `~/.claude.json` (global):
+
+```json
+{
+  "mcpServers": {
+    "loxone": {
+      "command": "python",
+      "args": ["-m", "loxone_mcp", "--transport", "stdio"],
+      "env": {
+        "LOXONE_HOST": "192.168.1.100",
+        "LOXONE_USERNAME": "mcp-user",
+        "LOXONE_PASSWORD": "your-password"
+      }
+    }
+  }
+}
+```
+
+Or via CLI:
+
+```bash
+claude mcp add loxone -- python -m loxone_mcp --transport stdio
+```
+
+### GitHub Copilot CLI
+
+Add to `~/.config/github-copilot/mcp.json`:
+
+```json
+{
+  "servers": {
+    "loxone": {
+      "command": "python",
+      "args": ["-m", "loxone_mcp", "--transport", "stdio"],
+      "env": {
+        "LOXONE_HOST": "192.168.1.100",
+        "LOXONE_USERNAME": "mcp-user",
+        "LOXONE_PASSWORD": "your-password"
+      }
+    }
+  }
+}
+```
+
+### OpenAI Codex CLI
+
+Add to `~/.codex/config.json`:
+
+```json
+{
+  "mcpServers": {
+    "loxone": {
+      "command": "python",
+      "args": ["-m", "loxone_mcp", "--transport", "stdio"],
+      "env": {
+        "LOXONE_HOST": "192.168.1.100",
+        "LOXONE_USERNAME": "mcp-user",
+        "LOXONE_PASSWORD": "your-password"
+      }
+    }
+  }
+}
+```
+
+> **Tip:** For Docker-based setups, point the HTTP/SSE URL to your Docker host (e.g., `http://host.docker.internal:8080/sse`). For stdio transport, the `python` command must be available in your `PATH` with `loxone-mcp` installed.
+
 ## MCP Resources
 
 | URI | Description |
