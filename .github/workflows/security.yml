@@ -43,14 +43,14 @@ jobs:
       - name: Build image
         run: docker build -f docker/Dockerfile -t loxone-mcp:scan .
       - name: Run Trivy (table output)
-        uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # master
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # master
         with:
           image-ref: "loxone-mcp:scan"
           format: "table"
           severity: "CRITICAL,HIGH"
       - name: Run Trivy (SARIF output)
         if: github.repository != 'ondrejlevy/loxone-mcp'
-        uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # master
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # master
         with:
           image-ref: "loxone-mcp:scan"
           format: "sarif"
@@ -72,7 +72,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Run Trivy filesystem scan (table output)
-        uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # master
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # master
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -80,7 +80,7 @@ jobs:
           severity: "CRITICAL,HIGH"
       - name: Run Trivy filesystem scan (SARIF output)
         if: github.repository != 'ondrejlevy/loxone-mcp'
-        uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # master
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # master
         with:
           scan-type: "fs"
           scan-ref: "."
