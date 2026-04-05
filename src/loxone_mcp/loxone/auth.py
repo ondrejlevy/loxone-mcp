@@ -32,7 +32,7 @@ import time
 import urllib.parse
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import structlog
 from cryptography.hazmat.primitives import serialization
@@ -151,7 +151,7 @@ async def _fetch_public_key_http(
         req.add_header("Authorization", f"Basic {credentials}")
 
         with urllib.request.urlopen(req, timeout=10) as response:  # noqa: S310
-            return json.loads(response.read())
+            return cast("dict[str, Any]", json.loads(response.read()))
 
     data = await asyncio.to_thread(_load_public_key)
 
@@ -204,7 +204,7 @@ async def _token_auth(
         session_key_payload,
         padding.PKCS1v15(),
     )
-    b64_session = base64.b64encode(encrypted_session).decode("ascii")
+    b64_session = base64.b64encode(cast("bytes", encrypted_session)).decode("ascii")
 
     await ws.send(f"jdev/sys/keyexchange/{b64_session}")
     resp = _parse_response(await _recv_text(ws))
@@ -272,9 +272,11 @@ async def _token_auth(
 
     token_value = resp.get("value", {})
     if isinstance(token_value, dict):
+        typed_token_value = cast("dict[str, Any]", token_value)
+        valid_until = typed_token_value.get("validUntil")
         logger.info(
             "auth_token_acquired",
-            valid_until=token_value.get("validUntil"),
+            valid_until=valid_until,
         )
     else:
         logger.info("auth_token_acquired")
@@ -424,7 +426,7 @@ class LoxoneAuthenticator:
             data.encode(),
             padding.PKCS1v15(),
         )
-        return base64.b64encode(encrypted).decode()
+        return base64.b64encode(cast("bytes", encrypted)).decode()
 
     def encrypt_with_aes(self, data: str) -> str:
         """Encrypt data with AES-256-CBC using session key.

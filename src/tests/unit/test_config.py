@@ -35,14 +35,14 @@ from loxone_mcp.config import (
 
 class TestEnums:
     def test_access_mode_values(self) -> None:
-        assert AccessMode.READ_WRITE == "read-write"
-        assert AccessMode.READ_ONLY == "read-only"
-        assert AccessMode.WRITE_ONLY == "write-only"
+        assert AccessMode.READ_WRITE.value == "read-write"
+        assert AccessMode.READ_ONLY.value == "read-only"
+        assert AccessMode.WRITE_ONLY.value == "write-only"
 
     def test_transport_type_values(self) -> None:
-        assert TransportType.HTTP == "http"
-        assert TransportType.STDIO == "stdio"
-        assert TransportType.BOTH == "both"
+        assert TransportType.HTTP.value == "http"
+        assert TransportType.STDIO.value == "stdio"
+        assert TransportType.BOTH.value == "both"
 
 
 # --- Model Defaults ---

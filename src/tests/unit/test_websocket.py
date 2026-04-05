@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import struct
-from typing import Any
+from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
 
@@ -122,13 +122,14 @@ class TestAuthenticate:
         # authenticate_ws returns True by default (set in _make_ws)
         result = await ws.authenticate()
         assert result is True
-        ws._auth.authenticate_ws.assert_awaited_once_with(mock_conn)
+        auth_mock = cast("AsyncMock", ws._auth.authenticate_ws)
+        auth_mock.assert_awaited_once_with(mock_conn)
 
     async def test_auth_failed_code(self) -> None:
         ws = _make_ws()
         mock_conn = AsyncMock()
         ws._ws = mock_conn
-        ws._auth.authenticate_ws = AsyncMock(return_value=False)
+        cast("Any", ws._auth).authenticate_ws = AsyncMock(return_value=False)
 
         result = await ws.authenticate()
         assert result is False
@@ -137,7 +138,7 @@ class TestAuthenticate:
         ws = _make_ws()
         mock_conn = AsyncMock()
         ws._ws = mock_conn
-        ws._auth.authenticate_ws = AsyncMock(side_effect=Exception("auth error"))
+        cast("Any", ws._auth).authenticate_ws = AsyncMock(side_effect=Exception("auth error"))
 
         result = await ws.authenticate()
         assert result is False
@@ -522,7 +523,7 @@ class TestReconnect:
 
         mock_conn = AsyncMock()
         mock_ws_lib.connect = AsyncMock(return_value=mock_conn)
-        ws._auth.authenticate_ws = AsyncMock(return_value=False)
+        cast("Any", ws._auth).authenticate_ws = AsyncMock(return_value=False)
 
         await ws._reconnect()
         # Should not crash, just logs warning
@@ -548,11 +549,12 @@ class TestReceiveLoop:
         ws._ws.recv = AsyncMock(
             side_effect=websockets.ConnectionClosed(None, None)
         )
-        ws._reconnect = AsyncMock(side_effect=_stop_loop(ws))
+        cast("Any", ws)._reconnect = AsyncMock(side_effect=_stop_loop(ws))
 
         await ws._receive_loop()
 
-        ws._reconnect.assert_awaited_once()
+        reconnect_mock = cast("AsyncMock", ws._reconnect)
+        reconnect_mock.assert_awaited_once()
         assert ws._connected is False
 
     async def test_processes_binary_message(self) -> None:
@@ -611,10 +613,11 @@ class TestReceiveLoop:
         ws = _make_ws()
         ws._should_run = True
         ws._ws = None
-        ws._reconnect = AsyncMock(side_effect=_stop_loop(ws))
+        cast("Any", ws)._reconnect = AsyncMock(side_effect=_stop_loop(ws))
 
         await ws._receive_loop()
-        ws._reconnect.assert_awaited_once()
+        reconnect_mock = cast("AsyncMock", ws._reconnect)
+        reconnect_mock.assert_awaited_once()
 
 
 class TestKeepaliveLoop:

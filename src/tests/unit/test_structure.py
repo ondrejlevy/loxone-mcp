@@ -67,7 +67,7 @@ class TestParseRooms:
         assert room.default_rating == 5
 
     def test_parse_room_defaults(self) -> None:
-        raw = {"0f5e3a01-0288-1b0a-ffff504f9412ab34": {}}
+        raw: dict[str, Any] = {"0f5e3a01-0288-1b0a-ffff504f9412ab34": {}}
         rooms = _parse_rooms(raw)
         room = rooms[UUID("0f5e3a01-0288-1b0a-ffff504f9412ab34")]
         assert room.name == "Unknown"
@@ -81,7 +81,7 @@ class TestParseRooms:
 
 class TestParseCategories:
     def test_parse_valid_categories(self) -> None:
-        raw = {
+        raw: dict[str, Any] = {
             "0f5e3a01-0300-1b0a-ffff504f9412ab34": {
                 "name": "Lighting",
                 "type": "lights",
