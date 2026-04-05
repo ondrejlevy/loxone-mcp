@@ -17,12 +17,11 @@ from uuid import UUID
 import structlog
 import websockets
 
-from loxone_mcp.loxone.auth import LoxoneAuthenticator
-
 if TYPE_CHECKING:
     from websockets.asyncio.client import ClientConnection
 
     from loxone_mcp.config import LoxoneConfig
+    from loxone_mcp.loxone.auth import LoxoneAuthenticator
 
 logger = structlog.get_logger()
 
@@ -326,7 +325,7 @@ class LoxoneWebSocket:
         Returns:
             (msg_type, payload_length, is_estimated)
         """
-        bin_type, msg_type, info, _reserved, payload_len = struct.unpack_from(
+        _bin_type, msg_type, info, _reserved, payload_len = struct.unpack_from(
             "<BBBBI", data
         )
         is_estimated = (info >> 7) == 1

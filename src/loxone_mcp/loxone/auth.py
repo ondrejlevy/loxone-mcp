@@ -142,15 +142,18 @@ async def _fetch_public_key_http(
     password: str,
 ) -> str:
     """Fetch RSA public key via HTTP (required on modern firmware)."""
-    import urllib.request
+    def _load_public_key() -> dict[str, Any]:
+        import urllib.request
 
-    url = f"http://{host}:{port}/jdev/sys/getPublicKey"
-    req = urllib.request.Request(url)  # noqa: S310
-    credentials = base64.b64encode(f"{username}:{password}".encode()).decode()
-    req.add_header("Authorization", f"Basic {credentials}")
+        url = f"http://{host}:{port}/jdev/sys/getPublicKey"
+        req = urllib.request.Request(url)  # noqa: S310
+        credentials = base64.b64encode(f"{username}:{password}".encode()).decode()
+        req.add_header("Authorization", f"Basic {credentials}")
 
-    with urllib.request.urlopen(req, timeout=10) as response:  # noqa: S310
-        data = json.loads(response.read())
+        with urllib.request.urlopen(req, timeout=10) as response:  # noqa: S310
+            return json.loads(response.read())
+
+    data = await asyncio.to_thread(_load_public_key)
 
     resp = data.get("LL", data)
     if not _is_success(resp):
@@ -222,10 +225,7 @@ async def _token_auth(
     key_bytes = bytes.fromhex(key_hex)
 
     # Step 4: Compute HMAC credentials (per Loxone protocol / PyLoxone)
-    if hash_alg == "SHA1":
-        hash_func = hashlib.sha1  # noqa: S324
-    else:  # SHA256 or unknown -> default to SHA256
-        hash_func = hashlib.sha256
+    hash_func = hashlib.sha1 if hash_alg == "SHA1" else hashlib.sha256
 
     # pwd_hash = HASH("password:user_salt") -> uppercase hex
     pwd_hash = hash_func(
@@ -308,7 +308,7 @@ async def _hash_auth(
     hash_val = hmac.new(
         key_bytes,
         f"{username}:{password}".encode(),
-        hashlib.sha1,  # noqa: S324
+        hashlib.sha1,
     ).hexdigest()
 
     await ws.send(f"authenticate/{hash_val}")

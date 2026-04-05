@@ -71,7 +71,16 @@ COMPONENT_ACTIONS: dict[str, list[str]] = {
     "Switch": ["On", "Off", "Pulse"],
     "EIBDimmer": ["On", "Off"],
     "Dimmer": ["On", "Off"],
-    "Jalousie": ["FullUp", "FullDown", "Up", "Down", "Stop", "Shade", "manualPosition", "manualLamelle"],
+    "Jalousie": [
+        "FullUp",
+        "FullDown",
+        "Up",
+        "Down",
+        "Stop",
+        "Shade",
+        "manualPosition",
+        "manualLamelle",
+    ],
     "IRoomControllerV2": [
         "setManualTemperature",
         "setComfortTemperature",
