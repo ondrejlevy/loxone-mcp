@@ -66,7 +66,7 @@ async def send_stdio_notification(
         return
 
     try:
-        from mcp.shared.session import SessionMessage  # type: ignore[attr-defined]
+        from mcp.shared.message import SessionMessage
         from mcp.types import JSONRPCMessage, JSONRPCNotification
 
         # Build a proper JSON-RPC notification via the SDK types

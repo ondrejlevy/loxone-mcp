@@ -367,7 +367,9 @@ class TestGetTemperatures:
             server, "get_temperatures", {"room_name": "Bathroom"}
         )
         result = json.loads(result_raw[0].text)
-        thermostat = [t for t in result["temperatures"] if t["type"] == "IRoomControllerV2"][0]
+        thermostat = next(
+            t for t in result["temperatures"] if t["type"] == "IRoomControllerV2"
+        )
         assert thermostat["comfortTemperature"] == 22.0
         assert thermostat["comfortTemperatureCool"] == 25.0
 
@@ -378,7 +380,9 @@ class TestGetTemperatures:
             server, "get_temperatures", {"room_name": "Bathroom"}
         )
         result = json.loads(result_raw[0].text)
-        thermostat = [t for t in result["temperatures"] if t["type"] == "IRoomControllerV2"][0]
+        thermostat = next(
+            t for t in result["temperatures"] if t["type"] == "IRoomControllerV2"
+        )
         assert thermostat["frostProtectTemperature"] == 5.0
         assert thermostat["heatProtectTemperature"] == 38.0
 
@@ -389,7 +393,9 @@ class TestGetTemperatures:
             server, "get_temperatures", {"room_name": "Living Room"}
         )
         result = json.loads(result_raw[0].text)
-        thermostat = [t for t in result["temperatures"] if t["type"] == "IRoomControllerV2"][0]
+        thermostat = next(
+            t for t in result["temperatures"] if t["type"] == "IRoomControllerV2"
+        )
         # Living Room thermostat has openWindow=1
         assert thermostat["openWindow"] is True
 
@@ -400,7 +406,9 @@ class TestGetTemperatures:
             server, "get_temperatures", {"room_name": "Bathroom"}
         )
         result = json.loads(result_raw[0].text)
-        thermostat = [t for t in result["temperatures"] if t["type"] == "IRoomControllerV2"][0]
+        thermostat = next(
+            t for t in result["temperatures"] if t["type"] == "IRoomControllerV2"
+        )
         assert thermostat["prepareState"] == 0
 
     async def test_living_room_temperature_sensor(self) -> None:

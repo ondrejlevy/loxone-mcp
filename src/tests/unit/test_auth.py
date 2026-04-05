@@ -49,9 +49,9 @@ class TestAuthToken:
 
 class TestAuthTier:
     def test_tier_values(self) -> None:
-        assert AuthTier.TOKEN_WS == "token-websocket"
-        assert AuthTier.TOKEN_HTTP == "token-http"
-        assert AuthTier.HASH == "hash-legacy"
+        assert AuthTier.TOKEN_WS.value == "token-websocket"
+        assert AuthTier.TOKEN_HTTP.value == "token-http"
+        assert AuthTier.HASH.value == "hash-legacy"
 
 
 # --- AuthSession Tests ---

@@ -32,7 +32,7 @@ import time
 import urllib.parse
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import structlog
 from cryptography.hazmat.primitives import serialization
@@ -142,15 +142,18 @@ async def _fetch_public_key_http(
     password: str,
 ) -> str:
     """Fetch RSA public key via HTTP (required on modern firmware)."""
-    import urllib.request
+    def _load_public_key() -> dict[str, Any]:
+        import urllib.request
 
-    url = f"http://{host}:{port}/jdev/sys/getPublicKey"
-    req = urllib.request.Request(url)  # noqa: S310
-    credentials = base64.b64encode(f"{username}:{password}".encode()).decode()
-    req.add_header("Authorization", f"Basic {credentials}")
+        url = f"http://{host}:{port}/jdev/sys/getPublicKey"
+        req = urllib.request.Request(url)  # noqa: S310
+        credentials = base64.b64encode(f"{username}:{password}".encode()).decode()
+        req.add_header("Authorization", f"Basic {credentials}")
 
-    with urllib.request.urlopen(req, timeout=10) as response:  # noqa: S310
-        data = json.loads(response.read())
+        with urllib.request.urlopen(req, timeout=10) as response:  # noqa: S310
+            return cast("dict[str, Any]", json.loads(response.read()))
+
+    data = await asyncio.to_thread(_load_public_key)
 
     resp = data.get("LL", data)
     if not _is_success(resp):
@@ -201,7 +204,7 @@ async def _token_auth(
         session_key_payload,
         padding.PKCS1v15(),
     )
-    b64_session = base64.b64encode(encrypted_session).decode("ascii")
+    b64_session = base64.b64encode(cast("bytes", encrypted_session)).decode("ascii")
 
     await ws.send(f"jdev/sys/keyexchange/{b64_session}")
     resp = _parse_response(await _recv_text(ws))
@@ -222,10 +225,7 @@ async def _token_auth(
     key_bytes = bytes.fromhex(key_hex)
 
     # Step 4: Compute HMAC credentials (per Loxone protocol / PyLoxone)
-    if hash_alg == "SHA1":
-        hash_func = hashlib.sha1  # noqa: S324
-    else:  # SHA256 or unknown -> default to SHA256
-        hash_func = hashlib.sha256
+    hash_func = hashlib.sha1 if hash_alg == "SHA1" else hashlib.sha256
 
     # pwd_hash = HASH("password:user_salt") -> uppercase hex
     pwd_hash = hash_func(
@@ -272,9 +272,11 @@ async def _token_auth(
 
     token_value = resp.get("value", {})
     if isinstance(token_value, dict):
+        typed_token_value = cast("dict[str, Any]", token_value)
+        valid_until = typed_token_value.get("validUntil")
         logger.info(
             "auth_token_acquired",
-            valid_until=token_value.get("validUntil"),
+            valid_until=valid_until,
         )
     else:
         logger.info("auth_token_acquired")
@@ -308,7 +310,7 @@ async def _hash_auth(
     hash_val = hmac.new(
         key_bytes,
         f"{username}:{password}".encode(),
-        hashlib.sha1,  # noqa: S324
+        hashlib.sha1,
     ).hexdigest()
 
     await ws.send(f"authenticate/{hash_val}")
@@ -424,7 +426,7 @@ class LoxoneAuthenticator:
             data.encode(),
             padding.PKCS1v15(),
         )
-        return base64.b64encode(encrypted).decode()
+        return base64.b64encode(cast("bytes", encrypted)).decode()
 
     def encrypt_with_aes(self, data: str) -> str:
         """Encrypt data with AES-256-CBC using session key.

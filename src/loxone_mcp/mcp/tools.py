@@ -19,7 +19,9 @@ Implements Tools:
 
 from __future__ import annotations
 
+import contextlib
 import json
+import secrets
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
@@ -86,7 +88,10 @@ async def get_tool_list(server: LoxoneMCPServer) -> list[Tool]:
                     },
                     "params": {
                         "type": "object",
-                        "description": "Optional parameters (e.g., {\"value\": 50} for dimming, {\"id\": 777} for changeTo mood)",
+                        "description": (
+                            "Optional parameters (e.g., {\"value\": 50} for dimming, "
+                            "{\"id\": 777} for changeTo mood)"
+                        ),
                         "default": {},
                     },
                 },
@@ -1198,8 +1203,13 @@ async def _get_component_state(
                     )
                     state[primary_key] = comp_value
                     missing_main.pop(primary_key, None)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug(
+                    "component_primary_state_fallback_failed",
+                    component_uuid=comp_uuid_str,
+                    state_key=primary_key,
+                    error=str(exc),
+                )
 
         # Strategy 2: query remaining missing state UUIDs individually
         if missing_main:
@@ -1213,8 +1223,13 @@ async def _get_component_state(
                             comp_uuid_str, fkey, fvalue,
                         )
                     state.update(fetched)
-            except Exception:
-                pass  # HTTP fallback is best-effort
+            except Exception as exc:
+                logger.debug(
+                    "component_missing_state_fallback_failed",
+                    component_uuid=comp_uuid_str,
+                    missing_states=sorted(missing_main),
+                    error=str(exc),
+                )
 
     # Fetch missing subControl states (only for I/O types)
     if not skip_http and hasattr(comp, "sub_controls") and comp.sub_controls:
@@ -1241,8 +1256,14 @@ async def _get_component_state(
                             comp_uuid_str, composite, fvalue,
                         )
                         state[composite] = fvalue
-            except Exception:
-                pass  # best-effort
+            except Exception as exc:
+                logger.debug(
+                    "subcontrol_state_fallback_failed",
+                    component_uuid=comp_uuid_str,
+                    subcontrol_name=sub_name,
+                    missing_states=sorted(missing_sub),
+                    error=str(exc),
+                )
 
     return state
 
@@ -1669,10 +1690,8 @@ async def _handle_get_presence_status(
         if motion_detected is None and "infoNrMotion" in current_state:
             motion_detected = bool(current_state["infoNrMotion"])
         if brightness_lux is None and "infoNrBrightness" in current_state:
-            try:
+            with contextlib.suppress(TypeError, ValueError):
                 brightness_lux = float(current_state["infoNrBrightness"])
-            except (TypeError, ValueError):
-                pass
 
         # If no subControl or direct state provides motionDetected,
         # infer it from the main ``active`` state — a PresenceDetector's
@@ -2602,12 +2621,11 @@ async def _handle_set_slat_position(
         raise ToolExecutionError("set_slat_position", "No blinds found")
 
     results = []
-    import random as _rnd
     for comp in targets:
         try:
             # Use manualLamelle command (Loxone native Jalousie slat control)
             # Add tiny random offset to prevent Loxone caching/dedup
-            offset = _rnd.uniform(0.000000001, 0.009)
+            offset = secrets.randbelow(9_000_000) / 1_000_000_000 + 0.000000001
             action_str = f"manualLamelle/{position + offset}"
             await server._http_client.control_component(comp.loxone_uuid, action_str)
             results.append({

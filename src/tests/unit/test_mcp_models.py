@@ -18,10 +18,10 @@ from loxone_mcp.mcp.models import (
 
 class TestResourceMimeType:
     def test_json_value(self) -> None:
-        assert ResourceMimeType.JSON == "application/json"
+        assert ResourceMimeType.JSON.value == "application/json"
 
     def test_text_value(self) -> None:
-        assert ResourceMimeType.TEXT == "text/plain"
+        assert ResourceMimeType.TEXT.value == "text/plain"
 
     def test_str_enum(self) -> None:
         assert isinstance(ResourceMimeType.JSON, str)

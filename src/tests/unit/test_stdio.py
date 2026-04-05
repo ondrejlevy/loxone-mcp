@@ -6,10 +6,15 @@ Tests notification sending and transport lifecycle.
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from mcp.shared.message import SessionMessage
+
 from loxone_mcp.transport.stdio import run_stdio_transport, send_stdio_notification
+
+if TYPE_CHECKING:
+    from mcp.types import JSONRPCNotification
 
 
 class TestSendStdioNotification:
@@ -40,11 +45,10 @@ class TestSendStdioNotification:
         mock_stream.send.assert_awaited_once()
         sent_msg = mock_stream.send.call_args[0][0]
         # Verify it's a proper SessionMessage
-        from mcp.shared.session import SessionMessage
-
         assert isinstance(sent_msg, SessionMessage)
         # Verify the notification method is correct
-        assert sent_msg.message.root.method == "notifications/resources/updated"
+        root_message = cast("JSONRPCNotification", sent_msg.message.root)
+        assert root_message.method == "notifications/resources/updated"
 
     async def test_send_error_handled(self) -> None:
         """Test that send errors are caught and logged."""
